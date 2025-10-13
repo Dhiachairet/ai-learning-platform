@@ -16,7 +16,7 @@ const GoogleIcon = () => (
 export default function SignUp() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'student' | 'instructor'>('student');
+  const [role, setRole] = useState<'student' | 'instructor' | ''>('');
   const [showPassword, setShowPassword] = useState(false);
   const [educationLevel, setEducationLevel] = useState('');
   const [learningGoals, setLearningGoals] = useState('');
@@ -75,9 +75,11 @@ export default function SignUp() {
               <select
                 id="role"
                 value={role}
-                onChange={(e) => setRole(e.target.value as 'student' | 'instructor')}
+                onChange={(e) => setRole(e.target.value as 'student' | 'instructor' | '')}
                 className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 text-gray-900"
+                required
               >
+                <option value="">Choose...</option>
                 <option value="student">Student</option>
                 <option value="instructor">Instructor</option>
               </select>
