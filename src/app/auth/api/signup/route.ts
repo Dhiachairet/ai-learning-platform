@@ -5,10 +5,10 @@ import jwt from 'jsonwebtoken';
 
 export async function POST(request: Request) {
   await connectDB();
-  const { email, password, role, educationLevel, learningGoals, teachingExperience, expertiseArea } = await request.json();
+  const { email, name , password, role, educationLevel, expertiseArea } = await request.json();
 
-  if (!email || !password || !role) {
-    return NextResponse.json({ message: 'Missing required fields: email, password, and role are required' }, { status: 400 });
+  if (!email || !password || !role || !name) {
+    return NextResponse.json({ message: 'Missing required fields: email, password, role, and name are required' }, { status: 400 });
   }
 
   try {
@@ -19,31 +19,33 @@ export async function POST(request: Request) {
 
     const newUser = new User({
       email,
-      password, // Still hash this for security
+      name,
+      password,
       role,
       educationLevel,
-      learningGoals,
-      teachingExperience,
-      expertiseArea,
+      expertiseArea: Array.isArray(expertiseArea) ? expertiseArea : [expertiseArea],
+      
     });
     await newUser.save();
 
-    //  JWT 
     const token = jwt.sign(
       {
         id: newUser._id.toString(),
         email: newUser.email,
         role: newUser.role,
         educationLevel: newUser.educationLevel,
-        learningGoals: newUser.learningGoals,
-        teachingExperience: newUser.teachingExperience,
         expertiseArea: newUser.expertiseArea,
+        name: newUser.name,
       },
-      process.env.JWT_SECRET || 'minimal-secret-key', // Fallback to a default if not set
-      { noTimestamp: true } 
+      process.env.JWT_SECRET || 'minimal-secret-key',
+      { noTimestamp: true }
     );
 
-    return NextResponse.json({ message: 'User registered successfully', token }, { status: 201 });
+    return NextResponse.json({
+      message: 'User registered successfully',
+      token,
+      redirect: '/auth/signin'
+    }, { status: 201 });
   } catch (error) {
     console.error('Signup error details:', error);
     return NextResponse.json({ message: 'Error registering user' }, { status: 400 });

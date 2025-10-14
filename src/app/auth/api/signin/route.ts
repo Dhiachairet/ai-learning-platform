@@ -3,6 +3,8 @@ import User from '../../../model/User';
 import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 
+
+
 export async function POST(request: Request) {
   await connectDB();
   const { email, password } = await request.json();
@@ -17,19 +19,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Invalid email or password' }, { status: 401 });
     }
 
-    //  JWT with user data
     const token = jwt.sign(
       {
         id: user._id.toString(),
-        email: user.email,
+        name: user.name, // Using the new name field
         role: user.role,
-        educationLevel: user.educationLevel,
-        learningGoals: user.learningGoals,
-        teachingExperience: user.teachingExperience,
-        expertiseArea: user.expertiseArea,
       },
-            process.env.JWT_SECRET || 'minimal-secret-key', // Fallback to a default if not set
- 
+      process.env.JWT_SECRET || 'minimal-secret-key',
       { noTimestamp: true }
     );
 

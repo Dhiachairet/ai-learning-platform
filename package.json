@@ -12,6 +12,7 @@
     "@heroicons/react": "^2.2.0",
     "bcryptjs": "^3.0.2",
     "jsonwebtoken": "^9.0.2",
+    "jwt-decode": "^4.0.0",
     "mongodb": "^6.20.0",
     "mongoose": "^8.19.1",
     "next": "15.5.4",

@@ -1,6 +1,7 @@
 import { StarIcon, PlayIcon, ClockIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
+
 const courses = [
   {
     title: 'Complete Web Development Bootcamp',
@@ -10,7 +11,7 @@ const courses = [
     duration: '12 weeks',
     rating: 4.8,
     instructor: 'Sarah Johnson',
-    image: '/placeholder-web.jpg',  // Add images to public/
+    image: '/images/placeholder-web.jpg', // Updated to use images/ subfolder
     description: 'Learn HTML, CSS, JavaScript, React, Node.js, and MongoDB. Build real-world projects and become a full-stack developer.',
   },
   {
@@ -21,7 +22,7 @@ const courses = [
     duration: '10 weeks',
     rating: 4.9,
     instructor: 'Dr. Michael Chen',
-    image: '/placeholder-data.jpg',
+    image: '/images/placeholder-data.jpg', // Consistent with images/ subfolder
     description: 'Master data analysis, visualization, and machine learning with Python. Work with real datasets and build predictive models.',
   },
   {
@@ -32,7 +33,7 @@ const courses = [
     duration: '6 weeks',
     rating: 4.7,
     instructor: 'Emma Rodriguez',
-    image: '/placeholder-marketing.jpg',
+    image: '/images/placeholder-marketing.jpg', // Updated to use images/ subfolder
     description: 'Learn SEO, social media marketing, email campaigns, and analytics. Develop effective marketing strategies for any business.',
   },
 ];

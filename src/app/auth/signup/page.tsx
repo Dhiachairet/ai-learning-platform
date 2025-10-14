@@ -19,34 +19,46 @@ export default function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
   const [educationLevel, setEducationLevel] = useState('');
   const [learningGoals, setLearningGoals] = useState('');
-  const [teachingExperience, setTeachingExperience] = useState('');
-  const [expertiseArea, setExpertiseArea] = useState('');
+  const [expertiseArea, setExpertiseArea] = useState<string[]>([]);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [name, setName] = useState(''); // New name state
   const [message, setMessage] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const data = { email, password, role, educationLevel, learningGoals, teachingExperience, expertiseArea };
-    console.log('Sending data:', data);
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  const data = { email , name , password, role, educationLevel, learningGoals, expertiseArea }; // Ensure name is here
+  console.log('Sending data:', data); // Add this log to inspect the data
 
-    try {
-      const response = await fetch('/auth/api/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+  try {
+    const response = await fetch('/auth/api/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
 
-      const result = await response.json();
-      if (response.ok) {
-        localStorage.setItem('token', result.token); // Store token
-        setMessage('User registered successfully!');
-      } else {
-        setMessage(`Error: ${result.message || 'Registration failed'}`);
+    const result = await response.json();
+    if (response.ok) {
+      localStorage.setItem('token', result.token);
+      if (result.redirect) {
+        window.location.href = result.redirect + `?message=${encodeURIComponent(result.message)}&token=${encodeURIComponent(result.token)}`;
       }
-    } catch (error) {
-      setMessage('An error occurred. Please try again.');
-      console.error('Signup error:', error);
+    } else {
+      setMessage(`Error: ${result.message || 'Registration failed'}`);
     }
+  } catch (error) {
+    setMessage('An error occurred. Please try again.');
+    console.error('Signup error:', error);
+  }
+};
+
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value, checked } = e.target;
+    setExpertiseArea((prev) =>
+      checked ? [...prev, value] : prev.filter((item) => item !== value)
+    );
   };
+
+  const categories = ['Development', 'Data Science', 'Design', 'Marketing', 'Business'];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-green-600">
@@ -55,6 +67,17 @@ export default function SignUp() {
         <div className="bg-white p-8 rounded-xl shadow-xl">
           <h2 className="text-3xl font-bold text-gray-900 text-center mb-6">Sign Up</h2>
           <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
+              <input
+                type="text"
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 text-gray-900"
+                required
+              />
+            </div>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
               <input
@@ -129,31 +152,35 @@ export default function SignUp() {
               </>
             )}
             {role === 'instructor' && (
-              <>
-                <div>
-                  <label htmlFor="teachingExperience" className="block text-sm font-medium text-gray-700">Teaching Experience (Years)</label>
-                  <input
-                    type="number"
-                    id="teachingExperience"
-                    value={teachingExperience}
-                    onChange={(e) => setTeachingExperience(e.target.value)}
-                    className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 text-gray-900"
-                    min="0"
-                    max="20"
-                  />
+              <div>
+                <label htmlFor="expertiseArea" className="block text-sm font-medium text-gray-700">Expertise Areas</label>
+                <div className="relative mt-1">
+                  <div
+                    className="border border-gray-300 rounded-md shadow-sm px-4 py-2 bg-white cursor-pointer focus:ring-purple-500 focus:border-purple-500"
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  >
+                    <span className="text-gray-900 font-medium">
+                      {expertiseArea.length > 0 ? expertiseArea.map(cat => cat.replace('-', ' ')).join(', ') : 'Choose categories'}
+                    </span>
+                  </div>
+                  {isDropdownOpen && (
+                    <div className="absolute z-10 w-full mt-1 border border-gray-300 rounded-md shadow-lg bg-white max-h-40 overflow-auto">
+                      {categories.map((category) => (
+                        <label key={category} className="flex items-center px-4 py-2 hover:bg-gray-100">
+                          <input
+                            type="checkbox"
+                            value={category.toLowerCase().replace(' ', '-')}
+                            checked={expertiseArea.includes(category.toLowerCase().replace(' ', '-'))}
+                            onChange={handleCategoryChange}
+                            className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                          />
+                          <span className="ml-2 text-gray-700">{category}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <label htmlFor="expertiseArea" className="block text-sm font-medium text-gray-700">Expertise Area</label>
-                  <input
-                    type="text"
-                    id="expertiseArea"
-                    value={expertiseArea}
-                    onChange={(e) => setExpertiseArea(e.target.value)}
-                    className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 text-gray-900"
-                    placeholder="e.g., Web Development, Data Science"
-                  />
-                </div>
-              </>
+              </div>
             )}
             <button
               type="submit"

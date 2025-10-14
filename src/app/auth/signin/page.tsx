@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { ArrowRightIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
 const GoogleIcon = () => (
   <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
@@ -16,32 +17,32 @@ export default function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState('');
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const message = searchParams.get('message');
+  const token = searchParams.get('token');
+
+  useEffect(() => {
+    if (token) {
+      localStorage.setItem('token', token); // Store token from signup redirect
+    }
+  }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const data = { email, password };
-    console.log('Sending data:', data);
-
-    try {
-      const response = await fetch('/auth/api/signin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json();
-      if (response.ok) {
-        localStorage.setItem('token', result.token); // Store token
-        setMessage('Sign-in successful!');
-        // Redirect to a protected page if needed
-        // window.location.href = '/dashboard';
-      } else {
-        setMessage(`Error: ${result.message || 'Sign-in failed'}`);
-      }
-    } catch (error) {
-      setMessage('An error occurred. Please try again.');
-      console.error('Signin error:', error);
+    setError('');
+    const res = await fetch('/auth/api/signin', { // Corrected path
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      localStorage.setItem('token', data.token); // Update token if different
+      router.push('/'); // Redirect to homepage (localhost:3000/)
+    } else {
+      setError(data.message || 'Sign-in failed');
     }
   };
 
@@ -51,56 +52,31 @@ export default function SignIn() {
       <div className="relative max-w-md mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8">
         <div className="bg-white p-8 rounded-xl shadow-xl">
           <h2 className="text-3xl font-bold text-gray-900 text-center mb-6">Sign In</h2>
+          {message && <p className="text-green-600 text-center mb-4">{message}</p>}
+          {error && <p className="text-red-500 text-center mb-4">{error}</p>}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-              <input
-                type="email"
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 text-gray-900"
-                required
-              />
+              <input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 text-gray-900" required />
             </div>
             <div className="relative">
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 text-gray-900 pr-10"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 flex items-center h-[135%] px-3 text-gray-500 hover:text-gray-700"
-              >
+              <input type={showPassword ? 'text' : 'password'} id="password" value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 text-gray-900 pr-10" required />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 flex items-center h-[135%] px-3 text-gray-500 hover:text-gray-700">
                 {showPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
               </button>
             </div>
-            <button
-              type="submit"
-              className="w-full py-3 px-4 bg-purple-600 text-white font-medium rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 flex items-center justify-center"
-            >
-              Sign In
+            <button type="submit" className="w-full py-3 px-4 bg-purple-600 text-white font-medium rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 flex items-center justify-center">
+              <ArrowRightIcon className="h-5 w-5 mr-2" /> Sign In
             </button>
           </form>
-          {message && <p className="mt-4 text-center text-sm text-gray-600">{message}</p>}
           <div className="mt-6 text-center">
-            <button
-              onClick={() => console.log('Google sign-in clicked')}
-              className="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center justify-center"
-            >
-              <GoogleIcon />
-              Sign in with Google
+            <button onClick={() => alert('Google sign-in not implemented yet')} className="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center justify-center">
+              <GoogleIcon /> Sign in with Google
             </button>
           </div>
           <p className="mt-4 text-center text-sm text-gray-600">
-            Don’t have an account?{' '}
-            <a href="/auth/signup" className="text-purple-600 hover:underline">Sign up</a>
+            Don’t have an account? <a href="/auth/signup" className="text-purple-600 hover:underline">Sign up</a>
           </p>
         </div>
       </div>
