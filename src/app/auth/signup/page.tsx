@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { UserPlusIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
-// Reusing the GoogleIcon component
 const GoogleIcon = () => (
   <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -22,10 +21,31 @@ export default function SignUp() {
   const [learningGoals, setLearningGoals] = useState('');
   const [teachingExperience, setTeachingExperience] = useState('');
   const [expertiseArea, setExpertiseArea] = useState('');
+  const [message, setMessage] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Sign up attempt:', { email, password, role, educationLevel, learningGoals, teachingExperience, expertiseArea });
+    const data = { email, password, role, educationLevel, learningGoals, teachingExperience, expertiseArea };
+    console.log('Sending data:', data);
+
+    try {
+      const response = await fetch('/auth/api/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        localStorage.setItem('token', result.token); // Store token
+        setMessage('User registered successfully!');
+      } else {
+        setMessage(`Error: ${result.message || 'Registration failed'}`);
+      }
+    } catch (error) {
+      setMessage('An error occurred. Please try again.');
+      console.error('Signup error:', error);
+    }
   };
 
   return (
@@ -36,9 +56,7 @@ export default function SignUp() {
           <h2 className="text-3xl font-bold text-gray-900 text-center mb-6">Sign Up</h2>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email
-              </label>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
               <input
                 type="email"
                 id="email"
@@ -49,9 +67,7 @@ export default function SignUp() {
               />
             </div>
             <div className="relative">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
               <input
                 type={showPassword ? 'text' : 'password'}
                 id="password"
@@ -69,9 +85,7 @@ export default function SignUp() {
               </button>
             </div>
             <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700">
-                Role
-              </label>
+              <label htmlFor="role" className="block text-sm font-medium text-gray-700">Role</label>
               <select
                 id="role"
                 value={role}
@@ -87,9 +101,7 @@ export default function SignUp() {
             {role === 'student' && (
               <>
                 <div>
-                  <label htmlFor="educationLevel" className="block text-sm font-medium text-gray-700">
-                    Current Education Level
-                  </label>
+                  <label htmlFor="educationLevel" className="block text-sm font-medium text-gray-700">Current Education Level</label>
                   <select
                     id="educationLevel"
                     value={educationLevel}
@@ -104,9 +116,7 @@ export default function SignUp() {
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="learningGoals" className="block text-sm font-medium text-gray-700">
-                    Learning Goals
-                  </label>
+                  <label htmlFor="learningGoals" className="block text-sm font-medium text-gray-700">Learning Goals</label>
                   <input
                     type="text"
                     id="learningGoals"
@@ -121,9 +131,7 @@ export default function SignUp() {
             {role === 'instructor' && (
               <>
                 <div>
-                  <label htmlFor="teachingExperience" className="block text-sm font-medium text-gray-700">
-                    Teaching Experience (Years)
-                  </label>
+                  <label htmlFor="teachingExperience" className="block text-sm font-medium text-gray-700">Teaching Experience (Years)</label>
                   <input
                     type="number"
                     id="teachingExperience"
@@ -135,9 +143,7 @@ export default function SignUp() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="expertiseArea" className="block text-sm font-medium text-gray-700">
-                    Expertise Area
-                  </label>
+                  <label htmlFor="expertiseArea" className="block text-sm font-medium text-gray-700">Expertise Area</label>
                   <input
                     type="text"
                     id="expertiseArea"
@@ -157,6 +163,7 @@ export default function SignUp() {
               Sign Up
             </button>
           </form>
+          {message && <p className="mt-4 text-center text-sm text-gray-600">{message}</p>}
           <div className="mt-6 text-center">
             <button
               onClick={() => console.log('Google sign-up clicked')}
@@ -168,9 +175,7 @@ export default function SignUp() {
           </div>
           <p className="mt-4 text-center text-sm text-gray-600">
             Already have an account?{' '}
-            <a href="/auth/signin" className="text-purple-600 hover:underline">
-              Sign in
-            </a>
+            <a href="/auth/signin" className="text-purple-600 hover:underline">Sign in</a>
           </p>
         </div>
       </div>

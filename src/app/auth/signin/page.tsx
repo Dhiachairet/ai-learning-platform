@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowRightIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
-// Official Google "G" logo
 const GoogleIcon = () => (
   <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -17,10 +16,33 @@ export default function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Sign in attempt:', { email, password });
+    const data = { email, password };
+    console.log('Sending data:', data);
+
+    try {
+      const response = await fetch('/auth/api/signin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        localStorage.setItem('token', result.token); // Store token
+        setMessage('Sign-in successful!');
+        // Redirect to a protected page if needed
+        // window.location.href = '/dashboard';
+      } else {
+        setMessage(`Error: ${result.message || 'Sign-in failed'}`);
+      }
+    } catch (error) {
+      setMessage('An error occurred. Please try again.');
+      console.error('Signin error:', error);
+    }
   };
 
   return (
@@ -31,9 +53,7 @@ export default function SignIn() {
           <h2 className="text-3xl font-bold text-gray-900 text-center mb-6">Sign In</h2>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email
-              </label>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
               <input
                 type="email"
                 id="email"
@@ -44,9 +64,7 @@ export default function SignIn() {
               />
             </div>
             <div className="relative">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
               <input
                 type={showPassword ? 'text' : 'password'}
                 id="password"
@@ -67,10 +85,10 @@ export default function SignIn() {
               type="submit"
               className="w-full py-3 px-4 bg-purple-600 text-white font-medium rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 flex items-center justify-center"
             >
-              <ArrowRightIcon className="h-5 w-5 mr-2" />
               Sign In
             </button>
           </form>
+          {message && <p className="mt-4 text-center text-sm text-gray-600">{message}</p>}
           <div className="mt-6 text-center">
             <button
               onClick={() => console.log('Google sign-in clicked')}
@@ -82,9 +100,7 @@ export default function SignIn() {
           </div>
           <p className="mt-4 text-center text-sm text-gray-600">
             Don’t have an account?{' '}
-            <a href="/auth/signup" className="text-purple-600 hover:underline">
-              Sign up
-            </a>
+            <a href="/auth/signup" className="text-purple-600 hover:underline">Sign up</a>
           </p>
         </div>
       </div>
