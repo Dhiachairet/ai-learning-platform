@@ -21,36 +21,41 @@ export default function SignUp() {
   const [learningGoals, setLearningGoals] = useState('');
   const [expertiseArea, setExpertiseArea] = useState<string[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [name, setName] = useState(''); // New name state
+  const [name, setName] = useState('');
   const [message, setMessage] = useState<string | null>(null);
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  const data = { email , name , password, role, educationLevel, learningGoals, expertiseArea }; // Ensure name is here
-  console.log('Sending data:', data); // Add this log to inspect the data
+  // Handle normal signup
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const data = { email, name, password, role, educationLevel, learningGoals, expertiseArea };
 
-  try {
-    const response = await fetch('/auth/api/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
+    try {
+      const response = await fetch('/auth/api/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
 
-    const result = await response.json();
-    if (response.ok) {
-      localStorage.setItem('token', result.token);
-      if (result.redirect) {
-        window.location.href = result.redirect + `?message=${encodeURIComponent(result.message)}&token=${encodeURIComponent(result.token)}`;
+      const result = await response.json();
+      if (response.ok) {
+        localStorage.setItem('token', result.token);
+        if (result.redirect) {
+          window.location.href =
+            result.redirect +
+            `?message=${encodeURIComponent(result.message)}&token=${encodeURIComponent(result.token)}`;
+        } else {
+          window.location.href = '/';
+        }
+      } else {
+        setMessage(`Error: ${result.message || 'Registration failed'}`);
       }
-    } else {
-      setMessage(`Error: ${result.message || 'Registration failed'}`);
+    } catch (error) {
+      setMessage('An error occurred. Please try again.');
+      console.error('Signup error:', error);
     }
-  } catch (error) {
-    setMessage('An error occurred. Please try again.');
-    console.error('Signup error:', error);
-  }
-};
+  };
 
+  // Categories for instructors
   const handleCategoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value, checked } = e.target;
     setExpertiseArea((prev) =>
@@ -60,43 +65,84 @@ const handleSubmit = async (e: React.FormEvent) => {
 
   const categories = ['Development', 'Data Science', 'Design', 'Marketing', 'Business'];
 
+  // 🔹 Google sign-up logic (same as SignIn)
+  const googleAuthUrl =
+    `https://accounts.google.com/o/oauth2/v2/auth?` +
+    `client_id=${process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}&` +
+    `redirect_uri=${encodeURIComponent('http://localhost:3000/api/auth/google/callback')}&` +
+    `response_type=code&` +
+    `scope=${encodeURIComponent('profile email')}`;
+
+  const handleGoogleSignUp = () => {
+    window.location.href = googleAuthUrl;
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-green-600">
+    <div
+      className="min-h-screen text-white"
+      style={{
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      }}
+    >
       <div className="absolute inset-0 bg-black/10" />
+
       <div className="relative max-w-md mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8">
-        <div className="bg-white p-8 rounded-xl shadow-xl">
-          <h2 className="text-3xl font-bold text-gray-900 text-center mb-6">Sign Up</h2>
+        <div className="bg-white/90 backdrop-blur-sm p-8 rounded-xl shadow-2xl">
+          <h2 className="text-3xl font-bold text-gray-800 text-center mb-6">Sign Up</h2>
+
+          {message && (
+            <p
+              className={`text-center mb-4 text-sm ${
+                message.includes('Error') ? 'text-red-500' : 'text-emerald-600'
+              }`}
+            >
+              {message}
+            </p>
+          )}
+
+          {/* Regular signup form */}
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Name */}
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                Name
+              </label>
               <input
                 type="text"
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 text-gray-900"
+                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
                 required
               />
             </div>
+
+            {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email
+              </label>
               <input
                 type="email"
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 text-gray-900"
+                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
                 required
               />
             </div>
+
+            {/* Password */}
             <div className="relative">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
               <input
                 type={showPassword ? 'text' : 'password'}
                 id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 text-gray-900 pr-10"
+                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 pr-10"
                 required
               />
               <button
@@ -107,13 +153,17 @@ const handleSubmit = async (e: React.FormEvent) => {
                 {showPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
               </button>
             </div>
+
+            {/* Role */}
             <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700">Role</label>
+              <label htmlFor="role" className="block text-sm font-medium text-gray-700">
+                Role
+              </label>
               <select
                 id="role"
                 value={role}
                 onChange={(e) => setRole(e.target.value as 'student' | 'instructor' | '')}
-                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 text-gray-900"
+                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
                 required
               >
                 <option value="">Choose...</option>
@@ -121,46 +171,43 @@ const handleSubmit = async (e: React.FormEvent) => {
                 <option value="instructor">Instructor</option>
               </select>
             </div>
+
+            {/* Student Fields */}
             {role === 'student' && (
-              <>
-                <div>
-                  <label htmlFor="educationLevel" className="block text-sm font-medium text-gray-700">Current Education Level</label>
-                  <select
-                    id="educationLevel"
-                    value={educationLevel}
-                    onChange={(e) => setEducationLevel(e.target.value)}
-                    className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 text-gray-900"
-                  >
-                    <option value="">Select Level</option>
-                    <option value="high-school">High School</option>
-                    <option value="undergraduate">Undergraduate</option>
-                    <option value="postgraduate">Postgraduate</option>
-                    <option value="self-learner">Self-Learner</option>
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="learningGoals" className="block text-sm font-medium text-gray-700">Learning Goals</label>
-                  <input
-                    type="text"
-                    id="learningGoals"
-                    value={learningGoals}
-                    onChange={(e) => setLearningGoals(e.target.value)}
-                    className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 text-gray-900"
-                    placeholder="e.g., Career Switch, Skill Upgrade"
-                  />
-                </div>
-              </>
+              <div>
+                <label htmlFor="educationLevel" className="block text-sm font-medium text-gray-700">
+                  Current Education Level
+                </label>
+                <select
+                  id="educationLevel"
+                  value={educationLevel}
+                  onChange={(e) => setEducationLevel(e.target.value)}
+                  className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                >
+                  <option value="">Select Level</option>
+                  <option value="high-school">High School</option>
+                  <option value="undergraduate">Undergraduate</option>
+                  <option value="postgraduate">Postgraduate</option>
+                  <option value="self-learner">Self-Learner</option>
+                </select>
+              </div>
             )}
+
+            {/* Instructor Fields */}
             {role === 'instructor' && (
               <div>
-                <label htmlFor="expertiseArea" className="block text-sm font-medium text-gray-700">Expertise Areas</label>
+                <label htmlFor="expertiseArea" className="block text-sm font-medium text-gray-700">
+                  Expertise Areas
+                </label>
                 <div className="relative mt-1">
                   <div
-                    className="border border-gray-300 rounded-md shadow-sm px-4 py-2 bg-white cursor-pointer focus:ring-purple-500 focus:border-purple-500"
+                    className="border border-gray-300 rounded-md shadow-sm px-4 py-2 bg-white cursor-pointer focus:ring-indigo-500 focus:border-indigo-500"
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   >
                     <span className="text-gray-900 font-medium">
-                      {expertiseArea.length > 0 ? expertiseArea.map(cat => cat.replace('-', ' ')).join(', ') : 'Choose categories'}
+                      {expertiseArea.length > 0
+                        ? expertiseArea.map((cat) => cat.replace('-', ' ')).join(', ')
+                        : 'Choose categories'}
                     </span>
                   </div>
                   {isDropdownOpen && (
@@ -170,9 +217,11 @@ const handleSubmit = async (e: React.FormEvent) => {
                           <input
                             type="checkbox"
                             value={category.toLowerCase().replace(' ', '-')}
-                            checked={expertiseArea.includes(category.toLowerCase().replace(' ', '-'))}
+                            checked={expertiseArea.includes(
+                              category.toLowerCase().replace(' ', '-')
+                            )}
                             onChange={handleCategoryChange}
-                            className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                           />
                           <span className="ml-2 text-gray-700">{category}</span>
                         </label>
@@ -182,27 +231,34 @@ const handleSubmit = async (e: React.FormEvent) => {
                 </div>
               </div>
             )}
+
+            {/* Submit Button */}
             <button
               type="submit"
-              className="w-full py-3 px-4 bg-purple-600 text-white font-medium rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 flex items-center justify-center"
+              className="w-full py-3 px-4 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center justify-center transition"
             >
               <UserPlusIcon className="h-5 w-5 mr-2" />
               Sign Up
             </button>
           </form>
-          {message && <p className="mt-4 text-center text-sm text-gray-600">{message}</p>}
+
+          {/* 🔹 Google Sign-Up */}
           <div className="mt-6 text-center">
             <button
-              onClick={() => console.log('Google sign-up clicked')}
-              className="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center justify-center"
+              onClick={handleGoogleSignUp}
+              className="w-full py-3 px-4 bg-white text-gray-800 font-medium rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center justify-center shadow-md transition"
             >
               <GoogleIcon />
-              Sign up with Google
+              Continue with Google
             </button>
           </div>
+
+          {/* Sign In Link */}
           <p className="mt-4 text-center text-sm text-gray-600">
             Already have an account?{' '}
-            <a href="/auth/signin" className="text-purple-600 hover:underline">Sign in</a>
+            <a href="/auth/signin" className="text-indigo-600 hover:underline font-medium">
+              Sign in
+            </a>
           </p>
         </div>
       </div>

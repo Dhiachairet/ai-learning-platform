@@ -22,61 +22,133 @@ export default function SignIn() {
   const searchParams = useSearchParams();
   const message = searchParams.get('message');
   const token = searchParams.get('token');
+  const err = searchParams.get('error');
 
   useEffect(() => {
     if (token) {
-      localStorage.setItem('token', token); // Store token from signup redirect
+      localStorage.setItem('token', token);
+      router.push('/');
     }
-  }, [token]);
+    if (err) setError(err === 'no_code' ? 'Google auth failed – no code' : err);
+  }, [token, err, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    const res = await fetch('/auth/api/signin', { // Corrected path
+    const res = await fetch('/auth/api/signin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
     const data = await res.json();
     if (res.ok) {
-      localStorage.setItem('token', data.token); // Update token if different
-      router.push('/'); // Redirect to homepage (localhost:3000/)
+      localStorage.setItem('token', data.token);
+      router.push('/');
     } else {
       setError(data.message || 'Sign-in failed');
     }
   };
 
+  const googleAuthUrl =
+    `https://accounts.google.com/o/oauth2/v2/auth?` +
+    `client_id=${process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}&` +
+    `redirect_uri=${encodeURIComponent('http://localhost:3000/api/auth/google/callback')}&` +
+    `response_type=code&` +
+    `scope=${encodeURIComponent('profile email')}`;
+
+  const handleGoogleSignIn = () => {
+    window.location.href = googleAuthUrl;
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-green-600">
+    <div
+      className="min-h-screen text-white"
+      style={{
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      }}
+    >
       <div className="absolute inset-0 bg-black/10" />
+
       <div className="relative max-w-md mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8">
-        <div className="bg-white p-8 rounded-xl shadow-xl">
-          <h2 className="text-3xl font-bold text-gray-900 text-center mb-6">Sign In</h2>
-          {message && <p className="text-green-600 text-center mb-4">{message}</p>}
-          {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+        <div className="bg-white/90 backdrop-blur-sm p-8 rounded-xl shadow-2xl">
+          <h2 className="text-3xl font-bold text-gray-800 text-center mb-6">Sign In</h2>
+
+          {message && (
+            <p className="text-emerald-600 text-center mb-4 text-sm">{message}</p>
+          )}
+          {error && (
+            <p className="text-red-500 text-center mb-4 text-sm">{error}</p>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-              <input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 text-gray-900" required />
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email
+              </label>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                required
+              />
             </div>
+
+            {/* Password */}
             <div className="relative">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
-              <input type={showPassword ? 'text' : 'password'} id="password" value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 text-gray-900 pr-10" required />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 flex items-center h-[135%] px-3 text-gray-500 hover:text-gray-700">
-                {showPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 pr-10"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 flex items-center h-[135%] px-3 text-gray-500 hover:text-gray-700"
+              >
+                {showPassword ? (
+                  <EyeSlashIcon className="h-5 w-5" />
+                ) : (
+                  <EyeIcon className="h-5 w-5" />
+                )}
               </button>
             </div>
-            <button type="submit" className="w-full py-3 px-4 bg-purple-600 text-white font-medium rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 flex items-center justify-center">
-              <ArrowRightIcon className="h-5 w-5 mr-2" /> Sign In
+
+            {/* Sign In Button */}
+            <button
+              type="submit"
+              className="w-full py-3 px-4 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center justify-center transition"
+            >
+              <ArrowRightIcon className="h-5 w-5 mr-2" />
+              Sign In
             </button>
           </form>
+
+          {/* Google Sign-In */}
           <div className="mt-6 text-center">
-            <button onClick={() => alert('Google sign-in not implemented yet')} className="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center justify-center">
-              <GoogleIcon /> Sign in with Google
+            <button
+              onClick={handleGoogleSignIn}
+              className="w-full py-3 px-4 bg-white text-gray-800 font-medium rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center justify-center shadow-md transition"
+            >
+              <GoogleIcon />
+              Continue with Google
             </button>
           </div>
+
+          {/* Sign Up Link */}
           <p className="mt-4 text-center text-sm text-gray-600">
-            Don’t have an account? <a href="/auth/signup" className="text-purple-600 hover:underline">Sign up</a>
+            Don’t have an account?{' '}
+            <a href="/auth/signup" className="text-indigo-600 hover:underline font-medium">
+              Sign up
+            </a>
           </p>
         </div>
       </div>
