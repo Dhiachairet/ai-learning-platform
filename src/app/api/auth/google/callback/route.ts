@@ -37,36 +37,81 @@ export async function GET(request: Request) {
     // Check if user already exists
     let user = await User.findOne({ email });
 
-    // If not found → create one (auto signup)
+    // If user doesn't exist, create with empty role and redirect to role selection
     if (!user) {
       user = new User({
         name,
         email,
         image: picture,
-        password: 'google-oauth', // placeholder (won’t be used)
-        role: 'student', // default role
+        password: 'google-oauth',
+        role: '', // Empty role for new users
       });
       await user.save();
+
+      // Generate temporary token for role selection
+      const tempToken = jwt.sign(
+        {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          needsRoleSelection: true, // Flag to indicate role selection needed
+        },
+        process.env.JWT_SECRET!,
+        { expiresIn: '1h' } // Short expiration for security
+      );
+
+      // Redirect to role selection page
+      const redirectUrl = new URL('/auth/select-role', request.url);
+      redirectUrl.searchParams.set('token', tempToken);
+      return NextResponse.redirect(redirectUrl);
     }
 
-    // Generate JWT token
-    const token = jwt.sign(
+    // ✅ UPDATED: If user exists and has a role, redirect based on role
+    if (user.role) {
+      const token = jwt.sign(
+        {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+        process.env.JWT_SECRET!,
+        { expiresIn: '7d' }
+      );
+
+      // ✅ NEW: Determine redirect path based on role
+      let redirectPath = '/';
+      if (user.role === 'instructor') {
+        redirectPath = '/dashboard/instructor';
+      } else if (user.role === 'admin') {
+        redirectPath = '/dashboard/admin';
+      }
+
+      // ✅ NEW: Redirect directly to the appropriate page
+      const redirectUrl = new URL(redirectPath, request.url);
+      redirectUrl.searchParams.set('token', token);
+      redirectUrl.searchParams.set('message', 'Signed in with Google!');
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    // If user exists but has no role (edge case), redirect to role selection
+    const tempToken = jwt.sign(
       {
         id: user._id,
         name: user.name,
         email: user.email,
         role: user.role,
+        needsRoleSelection: true,
       },
       process.env.JWT_SECRET!,
-      { expiresIn: '7d' }
+      { expiresIn: '1h' }
     );
 
-    // Redirect to sign-in page with token in URL
-    const redirectUrl = new URL('/auth/signin', request.url);
-    redirectUrl.searchParams.set('token', token);
-    redirectUrl.searchParams.set('message', 'Signed in with Google!');
-
+    const redirectUrl = new URL('/auth/select-role', request.url);
+    redirectUrl.searchParams.set('token', tempToken);
     return NextResponse.redirect(redirectUrl);
+
   } catch (error) {
     console.error('Google callback error:', error);
     return NextResponse.redirect(new URL('/auth/signin?error=google_auth_failed', request.url));

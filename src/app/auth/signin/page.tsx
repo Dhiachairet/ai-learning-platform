@@ -23,31 +23,55 @@ export default function SignIn() {
   const message = searchParams.get('message');
   const token = searchParams.get('token');
   const err = searchParams.get('error');
+  const needsRoleSelection = searchParams.get('needsRoleSelection');
 
   useEffect(() => {
     if (token) {
       localStorage.setItem('token', token);
-      router.push('/');
+      
+      // Check if user needs to select role
+      if (needsRoleSelection === 'true') {
+        router.push(`/auth/select-role?token=${token}`);
+      } else {
+        router.push('/');
+      }
     }
     if (err) setError(err === 'no_code' ? 'Google auth failed – no code' : err);
-  }, [token, err, router]);
+  }, [token, err, needsRoleSelection, router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    const res = await fetch('/auth/api/signin', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await res.json();
-    if (res.ok) {
-      localStorage.setItem('token', data.token);
+// In your handleSubmit function, replace the success part:
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError('');
+  const res = await fetch('/auth/api/signin', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  const data = await res.json();
+  if (res.ok) {
+    localStorage.setItem('token', data.token);
+    
+    // ✅ NEW: Redirect based on user role
+    try {
+      const payload = JSON.parse(atob(data.token.split('.')[1]));
+      const userRole = payload.role;
+
+      if (userRole === 'instructor') {
+        router.push('/dashboard/instructor');
+      } else if (userRole === 'admin') {
+        router.push('/dashboard/admin');
+      } else {
+        router.push('/'); // Student goes to homepage
+      }
+    } catch (error) {
+      // Fallback if token decoding fails
       router.push('/');
-    } else {
-      setError(data.message || 'Sign-in failed');
     }
-  };
+  } else {
+    setError(data.message || 'Sign-in failed');
+  }
+};
 
   const googleAuthUrl =
     `https://accounts.google.com/o/oauth2/v2/auth?` +
@@ -145,7 +169,7 @@ export default function SignIn() {
 
           {/* Sign Up Link */}
           <p className="mt-4 text-center text-sm text-gray-600">
-            Don’t have an account?{' '}
+            Don't have an account?{' '}
             <a href="/auth/signup" className="text-indigo-600 hover:underline font-medium">
               Sign up
             </a>

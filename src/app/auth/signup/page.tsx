@@ -25,35 +25,40 @@ export default function SignUp() {
   const [message, setMessage] = useState<string | null>(null);
 
   // Handle normal signup
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const data = { email, name, password, role, educationLevel, learningGoals, expertiseArea };
+ // In your handleSubmit function, update the success part:
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  const data = { email, name, password, role, educationLevel, learningGoals, expertiseArea };
 
-    try {
-      const response = await fetch('/auth/api/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+  try {
+    const response = await fetch('/auth/api/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
 
-      const result = await response.json();
-      if (response.ok) {
-        localStorage.setItem('token', result.token);
-        if (result.redirect) {
-          window.location.href =
-            result.redirect +
-            `?message=${encodeURIComponent(result.message)}&token=${encodeURIComponent(result.token)}`;
-        } else {
-          window.location.href = '/';
-        }
+    const result = await response.json();
+    if (response.ok) {
+      localStorage.setItem('token', result.token);
+      
+      // Check if user needs role selection
+      if (result.needsRoleSelection) {
+        window.location.href = `/auth/select-role?token=${result.token}`;
+      } else if (result.redirect) {
+        window.location.href =
+          result.redirect +
+          `?message=${encodeURIComponent(result.message)}&token=${encodeURIComponent(result.token)}`;
       } else {
-        setMessage(`Error: ${result.message || 'Registration failed'}`);
+        window.location.href = '/';
       }
-    } catch (error) {
-      setMessage('An error occurred. Please try again.');
-      console.error('Signup error:', error);
+    } else {
+      setMessage(`Error: ${result.message || 'Registration failed'}`);
     }
-  };
+  } catch (error) {
+    setMessage('An error occurred. Please try again.');
+    console.error('Signup error:', error);
+  }
+};
 
   // Categories for instructors
   const handleCategoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
