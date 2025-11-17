@@ -12,15 +12,24 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 
+interface DashboardStats {
+  totalStudents: number;
+  coursesPublished: number;
+  completionRate: number;
+  studentSatisfaction: number;
+}
+
 export default function InstructorDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [userName, setUserName] = useState('');
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [recentCourses, setRecentCourses] = useState<any[]>([]);
   const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const initializeAuth = () => {
+    const initializeAuth = async () => {
       const tokenFromUrl = searchParams.get('token');
       
       // If token comes from URL (Google OAuth), save it to localStorage
@@ -51,12 +60,55 @@ export default function InstructorDashboard() {
 
         // ✅ Save user name for display
         setUserName(payload.name || 'Instructor');
+        
+        // Fetch real dashboard data
+        await fetchDashboardData(token);
         setIsLoading(false);
 
       } catch (error) {
         console.error('Token decode error:', error);
         localStorage.removeItem('token');
         router.push('/auth/signin');
+      }
+    };
+
+    const fetchDashboardData = async (token: string) => {
+      try {
+        const response = await fetch('/dashboard/instructor/api/courses', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Calculate stats from real data
+          const totalStudents = data.stats?.totalStudents || 0;
+          const coursesPublished = data.stats?.publishedCourses || 0;
+          const completionRate = 0; // You'll need to implement this based on your data
+          const studentSatisfaction = 4.9; // You'll need to implement this based on your data
+
+          setStats({
+            totalStudents,
+            coursesPublished,
+            completionRate,
+            studentSatisfaction
+          });
+
+          // Get recent courses (last 3)
+          setRecentCourses(data.courses?.slice(0, 3) || []);
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+        // Set default empty stats if API fails
+        setStats({
+          totalStudents: 0,
+          coursesPublished: 0,
+          completionRate: 0,
+          studentSatisfaction: 0
+        });
+        setRecentCourses([]);
       }
     };
 
@@ -75,58 +127,34 @@ export default function InstructorDashboard() {
     { name: 'Settings', href: '/dashboard/instructor/settings', icon: CogIcon, current: false },
   ];
 
-  const stats = [
+  const dashboardStats = [
     {
       name: 'Total Students',
-      value: '1,248',
-      change: '+12%',
+      value: stats?.totalStudents.toLocaleString() || '0',
+      change: '+0%',
       icon: UserGroupIcon,
       changeType: 'positive',
     },
     {
       name: 'Courses Published',
-      value: '8',
-      change: '+2',
+      value: stats?.coursesPublished.toString() || '0',
+      change: '+0',
       icon: BookOpenIcon,
       changeType: 'positive',
     },
     {
       name: 'Completion Rate',
-      value: '84%',
-      change: '+5%',
+      value: stats?.completionRate ? `${stats.completionRate}%` : '0%',
+      change: '+0%',
       icon: ChartBarIcon,
       changeType: 'positive',
     },
     {
       name: 'Student Satisfaction',
-      value: '4.9/5',
-      change: '+0.2',
+      value: stats?.studentSatisfaction ? `${stats.studentSatisfaction}/5` : '0/5',
+      change: '+0.0',
       icon: AcademicCapIcon,
       changeType: 'positive',
-    },
-  ];
-
-  const recentCourses = [
-    {
-      id: 1,
-      name: 'Advanced React Patterns',
-      students: 324,
-      rating: '4.9',
-      progress: 75,
-    },
-    {
-      id: 2,
-      name: 'Node.js Microservices',
-      students: 198,
-      rating: '4.8',
-      progress: 60,
-    },
-    {
-      id: 3,
-      name: 'Python Data Science',
-      students: 456,
-      rating: '4.9',
-      progress: 90,
     },
   ];
 
@@ -263,7 +291,7 @@ export default function InstructorDashboard() {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {stats.map((item) => (
+              {dashboardStats.map((item) => (
                 <div
                   key={item.name}
                   className="bg-white overflow-hidden shadow rounded-lg border border-gray-200 hover:shadow-md transition-shadow"
@@ -306,42 +334,51 @@ export default function InstructorDashboard() {
                 <h3 className="text-lg font-semibold text-gray-900">Recent Courses</h3>
               </div>
               <div className="p-6">
-                <div className="space-y-6">
-                  {recentCourses.map((course) => (
-                    <div key={course.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                      <div className="flex-1">
-                        <h4 className="text-lg font-semibold text-gray-900">{course.name}</h4>
-                        <div className="mt-2 flex items-center space-x-6 text-sm text-gray-600">
-                          <span className="flex items-center">
-                            <UserGroupIcon className="h-4 w-4 mr-1" />
-                            {course.students} students
-                          </span>
-                          <span className="flex items-center">
-                            <ChartBarIcon className="h-4 w-4 mr-1" />
-                            Rating: {course.rating}/5
-                          </span>
+                {recentCourses.length > 0 ? (
+                  <div className="space-y-6">
+                    {recentCourses.map((course) => (
+                      <div key={course._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <div className="flex-1">
+                          <h4 className="text-lg font-semibold text-gray-900">{course.title}</h4>
+                          <div className="mt-2 flex items-center space-x-6 text-sm text-gray-600">
+                            <span className="flex items-center">
+                              <UserGroupIcon className="h-4 w-4 mr-1" />
+                              {course.studentsEnrolled || 0} students
+                            </span>
+                            <span className="flex items-center">
+                              <ChartBarIcon className="h-4 w-4 mr-1" />
+                              Status: {course.status}
+                            </span>
+                          </div>
                         </div>
-                        <div className="mt-3 w-full bg-gray-200 rounded-full h-2">
-                          <div
-                            className="h-2 rounded-full transition-all duration-300"
-                            style={{ 
-                              width: `${course.progress}%`,
-                              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-                            }}
-                          ></div>
-                        </div>
+                        <button 
+                          onClick={() => router.push(`/dashboard/instructor/courses`)}
+                          className="ml-4 px-4 py-2 text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium"
+                          style={{
+                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                          }}
+                        >
+                          Manage
+                        </button>
                       </div>
-                      <button 
-                        className="ml-4 px-4 py-2 text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium"
-                        style={{
-                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-                        }}
-                      >
-                        Manage
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <BookOpenIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <p className="text-lg font-medium text-gray-900">No courses yet</p>
+                    <p className="text-gray-600 mt-1">Create your first course to get started</p>
+                    <button 
+                      onClick={() => router.push('/dashboard/instructor/courses')}
+                      className="mt-4 px-6 py-2 text-white rounded-lg hover:opacity-90 transition-colors"
+                      style={{
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                      }}
+                    >
+                      Create Your First Course
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -352,6 +389,7 @@ export default function InstructorDashboard() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Create New Course</h3>
                 <p className="text-gray-600 mb-4">Start building your next course</p>
                 <button 
+                  onClick={() => router.push('/dashboard/instructor/courses')}
                   className="w-full text-white py-2 rounded-lg hover:opacity-90 transition-colors"
                   style={{
                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
@@ -366,6 +404,7 @@ export default function InstructorDashboard() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Student Analytics</h3>
                 <p className="text-gray-600 mb-4">View detailed student progress</p>
                 <button 
+                  onClick={() => router.push('/dashboard/instructor/students')}
                   className="w-full text-white py-2 rounded-lg hover:opacity-90 transition-colors"
                   style={{
                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
@@ -380,6 +419,7 @@ export default function InstructorDashboard() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Course Insights</h3>
                 <p className="text-gray-600 mb-4">Check course performance & feedback</p>
                 <button 
+                  onClick={() => router.push('/dashboard/instructor/courses')}
                   className="w-full text-white py-2 rounded-lg hover:opacity-90 transition-colors"
                   style={{
                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'

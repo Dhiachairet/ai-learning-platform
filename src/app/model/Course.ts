@@ -5,9 +5,15 @@ const CourseSchema = new mongoose.Schema({
   description: { type: String, required: true },
   instructor: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   category: { type: String, required: true },
-  price: { type: Number, default: 0 },
+  level: { type: String, enum: ['beginner', 'intermediate', 'advanced'], default: 'beginner' },
   status: { type: String, enum: ['draft', 'pending', 'approved', 'rejected', 'reported'], default: 'draft' },
   thumbnail: { type: String },
+  materials: [{
+    type: { type: String, enum: ['pdf', 'image', 'youtube'], required: true },
+    url: { type: String, required: true },
+    title: { type: String, required: true },
+    description: { type: String }
+  }],
   lessons: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Lesson' }],
   students: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   createdAt: { type: Date, default: Date.now },
