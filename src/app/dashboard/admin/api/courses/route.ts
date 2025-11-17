@@ -3,7 +3,7 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/app/lib/db';
 
-// Mock data - in production, you'll use your actual Course model
+// Mock data with materials
 let mockCourses = [
   {
     _id: '1',
@@ -15,7 +15,6 @@ let mockCourses = [
       email: 'sarah.j@example.com'
     },
     category: 'Programming',
-    price: 49.99,
     level: 'beginner',
     duration: 15,
     studentsEnrolled: 1245,
@@ -23,6 +22,26 @@ let mockCourses = [
     status: 'approved',
     createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
     updatedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    materials: [
+      {
+        type: 'pdf',
+        url: '/uploads/1701234567890-react-course-syllabus.pdf',
+        title: 'Course Syllabus',
+        description: 'Complete course outline and learning objectives'
+      },
+      {
+        type: 'youtube',
+        url: 'https://www.youtube.com/watch?v=abcdefghijk',
+        title: 'Introduction to React',
+        description: 'Getting started with React components'
+      },
+      {
+        type: 'pdf',
+        url: '/uploads/1701234567891-react-exercises.pdf',
+        title: 'Practice Exercises',
+        description: 'Hands-on coding exercises'
+      }
+    ]
   },
   {
     _id: '2',
@@ -34,7 +53,6 @@ let mockCourses = [
       email: 'robert.w@example.com'
     },
     category: 'Data Science',
-    price: 99.99,
     level: 'advanced',
     duration: 40,
     studentsEnrolled: 567,
@@ -42,6 +60,26 @@ let mockCourses = [
     status: 'approved',
     createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
     updatedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+    materials: [
+      {
+        type: 'pdf',
+        url: '/uploads/1701234567892-ml-textbook.pdf',
+        title: 'ML Textbook',
+        description: 'Complete machine learning reference'
+      },
+      {
+        type: 'image',
+        url: '/uploads/1701234567893-neural-network.png',
+        title: 'Neural Network Architecture',
+        description: 'Diagram of neural network layers'
+      },
+      {
+        type: 'youtube',
+        url: 'https://www.youtube.com/watch?v=mn123456789',
+        title: 'ML Algorithms Explained',
+        description: 'Detailed explanation of key algorithms'
+      }
+    ]
   },
   {
     _id: '3',
@@ -53,7 +91,6 @@ let mockCourses = [
       email: 'sarah.j@example.com'
     },
     category: 'Design',
-    price: 29.99,
     level: 'beginner',
     duration: 12,
     studentsEnrolled: 0,
@@ -61,6 +98,7 @@ let mockCourses = [
     status: 'pending',
     createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
     updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    materials: [] // No materials for pending course
   },
   {
     _id: '4',
@@ -72,7 +110,6 @@ let mockCourses = [
       email: 'robert.w@example.com'
     },
     category: 'Programming',
-    price: 79.99,
     level: 'intermediate',
     duration: 25,
     studentsEnrolled: 892,
@@ -80,6 +117,20 @@ let mockCourses = [
     status: 'approved',
     createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
     updatedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+    materials: [
+      {
+        type: 'pdf',
+        url: '/uploads/1701234567894-nodejs-guide.pdf',
+        title: 'Node.js Setup Guide',
+        description: 'Environment setup and configuration'
+      },
+      {
+        type: 'youtube',
+        url: 'https://www.youtube.com/watch?v=xyz987654321',
+        title: 'REST API Development',
+        description: 'Building RESTful APIs with Express'
+      }
+    ]
   },
   {
     _id: '5',
@@ -91,7 +142,6 @@ let mockCourses = [
       email: 'sarah.j@example.com'
     },
     category: 'Mobile Development',
-    price: 69.99,
     level: 'intermediate',
     duration: 30,
     studentsEnrolled: 0,
@@ -99,6 +149,14 @@ let mockCourses = [
     status: 'rejected',
     createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
     updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    materials: [
+      {
+        type: 'pdf',
+        url: '/uploads/1701234567895-flutter-intro.pdf',
+        title: 'Flutter Introduction',
+        description: 'Getting started with Flutter'
+      }
+    ]
   },
   {
     _id: '6',
@@ -110,7 +168,6 @@ let mockCourses = [
       email: 'robert.w@example.com'
     },
     category: 'Security',
-    price: 89.99,
     level: 'intermediate',
     duration: 35,
     studentsEnrolled: 0,
@@ -118,6 +175,20 @@ let mockCourses = [
     status: 'reported',
     createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
     updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    materials: [
+      {
+        type: 'pdf',
+        url: '/uploads/1701234567896-security-basics.pdf',
+        title: 'Security Fundamentals',
+        description: 'Basic security concepts and principles'
+      },
+      {
+        type: 'image',
+        url: '/uploads/1701234567897-network-security.png',
+        title: 'Network Security Diagram',
+        description: 'Network security architecture overview'
+      }
+    ]
   },
 ];
 
@@ -149,7 +220,7 @@ export async function GET() {
       if (Course && User) {
         const courses = await Course.find()
           .populate('instructor', 'name email')
-          .select('title description instructor category price status createdAt updatedAt')
+          .select('title description instructor category level duration studentsEnrolled rating status createdAt updatedAt materials thumbnail')
           .sort({ createdAt: -1 })
           .lean();
 
@@ -182,18 +253,15 @@ export async function GET() {
 
         console.log('Successfully loaded real courses data');
         
-        // Add mock fields for frontend compatibility
-        const coursesWithMockFields = courses.map((course: { price: any; }) => ({
+        // Ensure materials field exists for all courses
+        const coursesWithMaterials = courses.map((course: any) => ({
           ...course,
-          level: 'beginner', // Mock field
-          duration: 10, // Mock field
-          studentsEnrolled: 0, // Mock field
-          rating: 0, // Mock field
-          price: course.price || 0 // Ensure price exists
+          materials: course.materials || [], // Ensure materials array exists
+          price: course.price || 0 // Ensure price exists for compatibility
         }));
 
         return NextResponse.json({
-          courses: coursesWithMockFields,
+          courses: coursesWithMaterials,
           stats,
           instructors
         });
@@ -227,7 +295,7 @@ export async function POST(request: Request) {
   try {
     await connectDB();
     const body = await request.json();
-    const { title, description, instructorId, category, price, level, duration, status } = body;
+    const { title, description, instructorId, category, level, duration, status, materials } = body;
 
     console.log('Creating new course:', { title, category, level });
 
@@ -254,14 +322,18 @@ export async function POST(request: Request) {
           );
         }
 
-        // Create new course - only include fields that exist in your schema
+        // Create new course - include materials if provided
         const newCourse = new Course({
           title,
           description,
           instructor: instructorId,
           category,
-          price: price || 0,
-          status: status || 'pending', // Default to pending for admin review
+          level: level || 'beginner',
+          duration: duration || 10,
+          studentsEnrolled: 0,
+          rating: 0,
+          status: status || 'pending',
+          materials: materials || [],
           createdAt: new Date(),
           updatedAt: new Date(),
         });
@@ -271,18 +343,9 @@ export async function POST(request: Request) {
         // Populate the instructor data for response
         await newCourse.populate('instructor', 'name email');
 
-        // Return course with additional mock fields for frontend compatibility
-        const courseWithMockFields = {
-          ...newCourse.toObject(),
-          level: level || 'beginner',
-          duration: duration || 10,
-          studentsEnrolled: 0,
-          rating: 0
-        };
-
         return NextResponse.json({
           message: 'Course created successfully',
-          course: courseWithMockFields
+          course: newCourse
         });
       }
     } catch (modelError) {
@@ -308,12 +371,12 @@ export async function POST(request: Request) {
         email: instructor.email
       },
       category,
-      price: price || 0,
       level: level || 'beginner',
       duration: duration || 10,
       studentsEnrolled: 0,
       rating: 0,
-      status: status || 'pending', // Default to pending for admin review
+      status: status || 'pending',
+      materials: materials || [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -339,7 +402,7 @@ export async function PUT(request: Request) {
   try {
     await connectDB();
     const body = await request.json();
-    const { id, title, description, instructorId, category, price, level, duration, status } = body;
+    const { id, title, description, instructorId, category, level, duration, status, materials } = body;
 
     console.log('Updating course:', { id, status });
 
@@ -367,7 +430,7 @@ export async function PUT(request: Request) {
           }
         }
 
-        // Build update object - only update provided fields
+        // Build update object - include materials if provided
         const updateData: any = {
           updatedAt: new Date()
         };
@@ -377,8 +440,10 @@ export async function PUT(request: Request) {
         if (description !== undefined) updateData.description = description;
         if (instructorId !== undefined) updateData.instructor = instructorId;
         if (category !== undefined) updateData.category = category;
-        if (price !== undefined) updateData.price = price;
+        if (level !== undefined) updateData.level = level;
+        if (duration !== undefined) updateData.duration = duration;
         if (status !== undefined) updateData.status = status;
+        if (materials !== undefined) updateData.materials = materials;
 
         const updatedCourse = await Course.findByIdAndUpdate(
           id,
@@ -393,18 +458,9 @@ export async function PUT(request: Request) {
           );
         }
 
-        // Return course with additional mock fields for frontend compatibility
-        const courseWithMockFields = {
-          ...updatedCourse.toObject(),
-          level: level || 'beginner',
-          duration: duration || 10,
-          studentsEnrolled: 0,
-          rating: 0
-        };
-
         return NextResponse.json({
           message: `Course ${status === 'approved' ? 'approved' : status === 'rejected' ? 'rejected' : 'updated'} successfully`,
-          course: courseWithMockFields
+          course: updatedCourse
         });
       }
     } catch (modelError) {
@@ -438,10 +494,10 @@ export async function PUT(request: Request) {
       description: description || mockCourses[courseIndex].description,
       instructor,
       category: category || mockCourses[courseIndex].category,
-      price: price !== undefined ? price : mockCourses[courseIndex].price,
       level: level || mockCourses[courseIndex].level,
       duration: duration || mockCourses[courseIndex].duration,
       status: status || mockCourses[courseIndex].status,
+      materials: materials !== undefined ? materials : mockCourses[courseIndex].materials,
       updatedAt: new Date().toISOString()
     };
 

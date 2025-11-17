@@ -24,7 +24,18 @@ import {
   ChevronRightIcon,
   CheckBadgeIcon,
   XCircleIcon,
+  InformationCircleIcon,
+  DocumentIcon,
+  PhotoIcon,
+  FilmIcon,
 } from "@heroicons/react/24/outline";
+
+interface CourseMaterial {
+  type: 'pdf' | 'image' | 'youtube';
+  url: string;
+  title: string;
+  description: string;
+}
 
 interface Course {
   _id: string;
@@ -36,7 +47,6 @@ interface Course {
     email: string;
   };
   category: string;
-  price: number;
   level: "beginner" | "intermediate" | "advanced";
   duration: number;
   studentsEnrolled: number;
@@ -45,6 +55,7 @@ interface Course {
   createdAt: string;
   updatedAt: string;
   thumbnail?: string;
+  materials: CourseMaterial[];
 }
 
 interface CourseStats {
@@ -55,6 +66,232 @@ interface CourseStats {
   reportedCourses: number;
   totalEnrollments: number;
 }
+
+// Course Details Modal
+const CourseDetailsModal = ({ 
+  course, 
+  onClose 
+}: { 
+  course: Course | null; 
+  onClose: () => void;
+}) => {
+  if (!course) return null;
+
+  const getMaterialIcon = (type: string) => {
+    switch (type) {
+      case 'pdf':
+        return <DocumentIcon className="h-5 w-5 text-red-500" />;
+      case 'image':
+        return <PhotoIcon className="h-5 w-5 text-green-500" />;
+      case 'youtube':
+        return <FilmIcon className="h-5 w-5 text-red-600" />;
+      default:
+        return <DocumentIcon className="h-5 w-5 text-gray-500" />;
+    }
+  };
+
+  const getMaterialTypeLabel = (type: string) => {
+    switch (type) {
+      case 'pdf':
+        return 'PDF Document';
+      case 'image':
+        return 'Image';
+      case 'youtube':
+        return 'YouTube Video';
+      default:
+        return 'File';
+    }
+  };
+
+  const handleMaterialClick = (material: CourseMaterial) => {
+    if (material.type === 'youtube') {
+      // Open YouTube video in new tab
+      window.open(material.url, '_blank');
+    } else {
+      // Open uploaded files in new tab
+      window.open(material.url, '_blank');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      
+      <div className="relative z-10 w-full max-w-4xl mx-auto p-6">
+        <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl border border-white/30 p-6 animate-slideUp max-h-[90vh] overflow-y-auto">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-xl font-bold text-gray-900">Course Details</h3>
+              <p className="text-sm text-gray-500 mt-1">Complete information about the course</p>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <XMarkIcon className="h-6 w-6 text-gray-500" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Basic Information */}
+            <div className="space-y-4">
+              <h4 className="text-lg font-semibold text-gray-900 border-b pb-2">Basic Information</h4>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Course Title</label>
+                <p className="mt-1 text-sm text-gray-900 font-medium">{course.title}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <p className="mt-1 text-sm text-gray-900">{course.description}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Category</label>
+                  <p className="mt-1 text-sm text-gray-900">{course.category}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Level</label>
+                  <span className={`inline-flex mt-1 px-2 py-1 text-xs font-semibold rounded-full ${getLevelColor(course.level)}`}>
+                    {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Duration</label>
+                <p className="mt-1 text-sm text-gray-900">{course.duration} hours</p>
+              </div>
+            </div>
+
+            {/* Instructor & Status */}
+            <div className="space-y-4">
+              <h4 className="text-lg font-semibold text-gray-900 border-b pb-2">Instructor & Status</h4>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Instructor Name</label>
+                <p className="mt-1 text-sm text-gray-900">{course.instructor.name}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Instructor Email</label>
+                <p className="mt-1 text-sm text-gray-900">{course.instructor.email}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Students Enrolled</label>
+                  <p className="mt-1 text-sm text-gray-900 flex items-center">
+                    <UserGroupIcon className="h-4 w-4 mr-1 text-gray-400" />
+                    {(course.studentsEnrolled || 0).toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Rating</label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {course.rating > 0 ? `${course.rating}/5.0` : 'No ratings yet'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Status</label>
+                  <span className={`inline-flex mt-1 px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(course.status)}`}>
+                    {course.status.charAt(0).toUpperCase() + course.status.slice(1)}
+                  </span>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Created</label>
+                  <p className="mt-1 text-sm text-gray-900">{formatDate(course.createdAt)}</p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Last Updated</label>
+                <p className="mt-1 text-sm text-gray-900">{formatDate(course.updatedAt)}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Course Materials Section */}
+          <div className="mt-6">
+            <h4 className="text-lg font-semibold text-gray-900 border-b pb-2 mb-4">
+              Course Materials ({course.materials?.length || 0})
+            </h4>
+            
+            {course.materials && course.materials.length > 0 ? (
+              <div className="space-y-3">
+                {course.materials.map((material, index) => (
+                  <div 
+                    key={index}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer"
+                    onClick={() => handleMaterialClick(material)}
+                  >
+                    <div className="flex items-center space-x-3 flex-1">
+                      {getMaterialIcon(material.type)}
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-gray-900">{material.title}</div>
+                        <div className="text-xs text-gray-500 flex items-center space-x-2">
+                          <span className="uppercase">{getMaterialTypeLabel(material.type)}</span>
+                          {material.description && (
+                            <>
+                              <span>•</span>
+                              <span>{material.description}</span>
+                            </>
+                          )}
+                        </div>
+                        <div className="text-xs text-blue-600 mt-1 truncate">
+                          {material.type === 'youtube' ? 'YouTube Video' : material.url.split('/').pop()}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      Click to view
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <DocumentIcon className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+                <p className="text-sm">No course materials uploaded yet</p>
+              </div>
+            )}
+          </div>
+
+          {/* Thumbnail Preview */}
+          {course.thumbnail && (
+            <div className="mt-6">
+              <h4 className="text-lg font-semibold text-gray-900 border-b pb-2 mb-4">Course Thumbnail</h4>
+              <div className="flex justify-center">
+                <img 
+                  src={course.thumbnail} 
+                  alt={course.title}
+                  className="max-w-full h-48 object-cover rounded-lg border border-gray-200"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end mt-6">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // DeleteModal component
 const DeleteModal = ({ 
@@ -100,6 +337,45 @@ const DeleteModal = ({
   );
 };
 
+// Helper functions (moved outside component)
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case "approved":
+      return "bg-green-100 text-green-800";
+    case "pending":
+      return "bg-yellow-100 text-yellow-800";
+    case "rejected":
+      return "bg-red-100 text-red-800";
+    case "reported":
+      return "bg-orange-100 text-orange-800";
+    case "draft":
+      return "bg-gray-100 text-gray-800";
+    default:
+      return "bg-gray-100 text-gray-800";
+  }
+};
+
+const getLevelColor = (level: string) => {
+  switch (level) {
+    case "beginner":
+      return "bg-blue-100 text-blue-800";
+    case "intermediate":
+      return "bg-purple-100 text-purple-800";
+    case "advanced":
+      return "bg-red-100 text-red-800";
+    default:
+      return "bg-gray-100 text-gray-800";
+  }
+};
+
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+};
+
 export default function CourseManagement() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -110,6 +386,10 @@ export default function CourseManagement() {
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "approved" | "rejected" | "reported">("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [coursesPerPage] = useState(10);
+
+  // Modal states
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   const router = useRouter();
 
@@ -152,7 +432,7 @@ export default function CourseManagement() {
     }
   };
 
-  // Mock data for demonstration
+  // Mock data for demonstration (with materials)
   const loadMockData = () => {
     const mockCourses: Course[] = [
       {
@@ -165,7 +445,6 @@ export default function CourseManagement() {
           email: "sarah.j@example.com"
         },
         category: "Programming",
-        price: 49.99,
         level: "beginner",
         duration: 15,
         studentsEnrolled: 1245,
@@ -173,6 +452,20 @@ export default function CourseManagement() {
         status: "approved",
         createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
         updatedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+        materials: [
+          {
+            type: 'pdf',
+            url: '/uploads/1701234567890-react-course-syllabus.pdf',
+            title: 'Course Syllabus',
+            description: 'Complete course outline and learning objectives'
+          },
+          {
+            type: 'youtube',
+            url: 'https://www.youtube.com/watch?v=abcdefghijk',
+            title: 'Introduction to React',
+            description: 'Getting started with React components'
+          }
+        ]
       },
       {
         _id: "2",
@@ -184,7 +477,6 @@ export default function CourseManagement() {
           email: "robert.w@example.com"
         },
         category: "Data Science",
-        price: 99.99,
         level: "advanced",
         duration: 40,
         studentsEnrolled: 567,
@@ -192,6 +484,20 @@ export default function CourseManagement() {
         status: "approved",
         createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
         updatedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+        materials: [
+          {
+            type: 'pdf',
+            url: '/uploads/1701234567891-ml-textbook.pdf',
+            title: 'ML Textbook',
+            description: 'Complete machine learning reference'
+          },
+          {
+            type: 'image',
+            url: '/uploads/1701234567892-neural-network.png',
+            title: 'Neural Network Architecture',
+            description: 'Diagram of neural network layers'
+          }
+        ]
       },
       {
         _id: "3",
@@ -203,7 +509,6 @@ export default function CourseManagement() {
           email: "sarah.j@example.com"
         },
         category: "Design",
-        price: 29.99,
         level: "beginner",
         duration: 12,
         studentsEnrolled: 0,
@@ -211,6 +516,7 @@ export default function CourseManagement() {
         status: "pending",
         createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
         updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+        materials: []
       },
       {
         _id: "4",
@@ -222,7 +528,6 @@ export default function CourseManagement() {
           email: "robert.w@example.com"
         },
         category: "Programming",
-        price: 79.99,
         level: "intermediate",
         duration: 25,
         studentsEnrolled: 892,
@@ -230,45 +535,15 @@ export default function CourseManagement() {
         status: "approved",
         createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
         updatedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        _id: "5",
-        title: "Mobile App Development with Flutter",
-        description: "Create cross-platform mobile applications using Flutter",
-        instructor: {
-          _id: "2",
-          name: "Sarah Johnson",
-          email: "sarah.j@example.com"
-        },
-        category: "Mobile Development",
-        price: 69.99,
-        level: "intermediate",
-        duration: 30,
-        studentsEnrolled: 0,
-        rating: 0,
-        status: "rejected",
-        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        _id: "6",
-        title: "Ethical Hacking Basics",
-        description: "Learn the fundamentals of cybersecurity and ethical hacking",
-        instructor: {
-          _id: "5",
-          name: "Dr. Robert Wilson",
-          email: "robert.w@example.com"
-        },
-        category: "Security",
-        price: 89.99,
-        level: "intermediate",
-        duration: 35,
-        studentsEnrolled: 0,
-        rating: 0,
-        status: "reported",
-        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      },
+        materials: [
+          {
+            type: 'pdf',
+            url: '/uploads/1701234567893-nodejs-guide.pdf',
+            title: 'Node.js Setup Guide',
+            description: 'Environment setup and configuration'
+          }
+        ]
+      }
     ];
 
     const mockStats: CourseStats = {
@@ -337,6 +612,12 @@ export default function CourseManagement() {
 
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
+  };
+
+  // View Course Details
+  const handleViewDetails = (course: Course) => {
+    setSelectedCourse(course);
+    setShowDetailsModal(true);
   };
 
   // Approve Course
@@ -435,51 +716,6 @@ export default function CourseManagement() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "approved":
-        return "bg-green-100 text-green-800";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "rejected":
-        return "bg-red-100 text-red-800";
-      case "reported":
-        return "bg-orange-100 text-orange-800";
-      case "draft":
-        return "bg-gray-100 text-gray-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getLevelColor = (level: string) => {
-    switch (level) {
-      case "beginner":
-        return "bg-blue-100 text-blue-800";
-      case "intermediate":
-        return "bg-purple-100 text-purple-800";
-      case "advanced":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(price);
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Toast */}
@@ -488,6 +724,15 @@ export default function CourseManagement() {
           {toast.message}
         </div>
       )}
+
+      {/* Course Details Modal */}
+      <CourseDetailsModal 
+        course={selectedCourse} 
+        onClose={() => {
+          setShowDetailsModal(false);
+          setSelectedCourse(null);
+        }} 
+      />
 
       {/* Delete Modal */}
       <DeleteModal 
@@ -682,7 +927,7 @@ export default function CourseManagement() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instructor</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Students</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -713,14 +958,13 @@ export default function CourseManagement() {
                               {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {formatPrice(course.price)}
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {course.duration} hours
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             <div className="flex items-center">
                               <UserGroupIcon className="h-4 w-4 mr-1 text-gray-400" />
-                              {course.studentsEnrolled.toLocaleString()}
-                            </div>
+{(course.studentsEnrolled || 0).toLocaleString()}                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(course.status)}`}>
@@ -729,6 +973,16 @@ export default function CourseManagement() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div className="flex space-x-2">
+                              {/* View Details Button */}
+                              <button 
+                                onClick={() => handleViewDetails(course)} 
+                                className="text-blue-600 hover:text-blue-900 transition-colors" 
+                                title="View Course Details"
+                              >
+                                <InformationCircleIcon className="h-5 w-5" />
+                              </button>
+
+                              {/* Approve/Reject Buttons (only for pending courses) */}
                               {course.status === "pending" && (
                                 <>
                                   <button 
@@ -747,6 +1001,8 @@ export default function CourseManagement() {
                                   </button>
                                 </>
                               )}
+                              
+                              {/* Delete Button */}
                               <button 
                                 onClick={() => handleDeleteCourse(course._id, course.title)} 
                                 className="text-red-600 hover:text-red-900 transition-colors" 

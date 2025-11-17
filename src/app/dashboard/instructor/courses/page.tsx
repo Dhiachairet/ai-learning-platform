@@ -94,71 +94,48 @@ const CourseModal = ({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  const handleFileUpload = async (file: File, type: 'pdf' | 'image') => {
-    setUploading(true);
-    setUploadProgress(0);
-    setUploadError(null);
+const handleFileUpload = async (file: File, type: 'pdf' | 'image') => {
+  setUploading(true);
+  setUploadProgress(0);
+  setUploadError(null);
+  
+  try {
+    const uploadFormData = new FormData();
+    uploadFormData.append('file', file);
+    uploadFormData.append('type', type);
+
+    console.log('Starting file upload:', file.name, file.type, file.size);
+
+    // Update this line to use the correct path
+    const response = await fetch('/dashboard/instructor/api/upload', {
+      method: 'POST',
+      body: uploadFormData,
+    });
+
+    console.log('Upload response status:', response.status);
     
-    try {
-      const uploadFormData = new FormData();
-      uploadFormData.append('file', file);
-      uploadFormData.append('type', type);
-
-      console.log('Starting file upload:', file.name, file.type, file.size);
-
-      // Simulate progress
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
-          }
-          return prev + 10;
-        });
-      }, 200);
-
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: uploadFormData,
-      });
-
-      clearInterval(progressInterval);
-
-      console.log('Upload response status:', response.status);
-      
-      if (!response.ok) {
-        let errorMessage = 'Upload failed';
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-          console.log('Upload error response:', errorData);
-        } catch (e) {
-          // If response is not JSON, get the text
-          const text = await response.text();
-          errorMessage = text || errorMessage;
-          console.log('Upload error text:', text);
-        }
-        throw new Error(errorMessage);
-      }
-
-      const result = await response.json();
-      console.log('Upload successful:', result);
-      
-      setUploadProgress(100);
-      
-      return result.url;
-    } catch (error) {
-      console.error('Upload error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Upload failed. Please try again.';
-      setUploadError(errorMessage);
-      throw error;
-    } finally {
-      setTimeout(() => {
-        setUploading(false);
-        setUploadProgress(0);
-      }, 1000);
+    if (!response.ok) {
+      throw new Error(`Upload failed with status: ${response.status}`);
     }
-  };
+
+    const result = await response.json();
+    console.log('Upload successful:', result);
+    
+    setUploadProgress(100);
+    
+    return result.url;
+  } catch (error) {
+    console.error('Upload error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Upload failed. Please try again.';
+    setUploadError(errorMessage);
+    throw error;
+  } finally {
+    setTimeout(() => {
+      setUploading(false);
+      setUploadProgress(0);
+    }, 1000);
+  }
+};
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>, materialType: 'pdf' | 'image') => {
     const file = event.target.files?.[0];
