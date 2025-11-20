@@ -281,7 +281,7 @@ const handleFileUpload = async (file: File, type: 'pdf' | 'image') => {
         />
 
         {/* Modal */}
-        <div className="relative z-10 w-full max-w-4xl mx-auto transform transition-all">
+      <div className="relative z-10 w-full max-w-4xl mx-auto lg:ml-80 transform transition-all">
           <div className="relative z-10 w-full max-w-4xl mx-auto p-6 bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl animate-slideUp text-gray-900">
             <div className="flex items-center justify-between mb-4">
               <div>

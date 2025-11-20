@@ -117,7 +117,7 @@ const CourseDetailsModal = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       
-      <div className="relative z-10 w-full max-w-4xl mx-auto p-6">
+      <div className="relative z-10 w-full max-w-4xl mx-auto lg:ml-80 p-6">
         <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl border border-white/30 p-6 animate-slideUp max-h-[90vh] overflow-y-auto">
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -219,6 +219,7 @@ const CourseDetailsModal = ({
           {/* Course Materials Section */}
           <div className="mt-6">
             <h4 className="text-lg font-semibold text-gray-900 border-b pb-2 mb-4">
+              
               Course Materials ({course.materials?.length || 0})
             </h4>
             
@@ -262,22 +263,7 @@ const CourseDetailsModal = ({
             )}
           </div>
 
-          {/* Thumbnail Preview */}
-          {course.thumbnail && (
-            <div className="mt-6">
-              <h4 className="text-lg font-semibold text-gray-900 border-b pb-2 mb-4">Course Thumbnail</h4>
-              <div className="flex justify-center">
-                <img 
-                  src={course.thumbnail} 
-                  alt={course.title}
-                  className="max-w-full h-48 object-cover rounded-lg border border-gray-200"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }}
-                />
-              </div>
-            </div>
-          )}
+        
 
           <div className="flex justify-end mt-6">
             <button
@@ -346,8 +332,7 @@ const getStatusColor = (status: string) => {
       return "bg-yellow-100 text-yellow-800";
     case "rejected":
       return "bg-red-100 text-red-800";
-    case "reported":
-      return "bg-orange-100 text-orange-800";
+    
     case "draft":
       return "bg-gray-100 text-gray-800";
     default:
@@ -860,13 +845,13 @@ export default function CourseManagement() {
 
             {/* Stats Overview */}
             {stats && (
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
+             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                 {[
                   { name: "Total Courses", value: stats.totalCourses, icon: BookOpenIcon, color: "blue" },
                   { name: "Pending Review", value: stats.pendingCourses, icon: ClockIcon, color: "yellow" },
                   { name: "Approved", value: stats.approvedCourses, icon: CheckCircleIcon, color: "green" },
                   { name: "Rejected", value: stats.rejectedCourses, icon: XCircleIcon, color: "red" },
-                  { name: "Reported", value: stats.reportedCourses, icon: ExclamationTriangleIcon, color: "orange" },
+                  
                 ].map((item) => (
                   <div key={item.name} className="bg-white rounded-lg shadow border border-gray-200 p-6 hover:shadow-md transition-shadow">
                     <div className="flex items-center">
@@ -908,7 +893,7 @@ export default function CourseManagement() {
                     <option value="pending">Pending Review</option>
                     <option value="approved">Approved</option>
                     <option value="rejected">Rejected</option>
-                    <option value="reported">Reported</option>
+                    
                   </select>
                 </div>
               </div>

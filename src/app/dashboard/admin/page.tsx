@@ -372,7 +372,7 @@ export default function AdminDashboard() {
                     {stats ? `${stats.pendingApprovals} courses waiting for review` : 'Review and approve new courses'}
                   </p>
                   <button 
-                    onClick={() => handleQuickAction('/dashboard/admin/approvals')}
+                    onClick={() => handleQuickAction('/dashboard/admin/courses')}
                     className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     Review Courses
