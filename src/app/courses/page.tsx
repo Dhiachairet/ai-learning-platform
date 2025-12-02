@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import {
   MagnifyingGlassIcon,
@@ -8,83 +9,80 @@ import {
   StarIcon,
   ClockIcon,
   PlayIcon,
+  BookOpenIcon,
 } from '@heroicons/react/24/outline';
 import Navbar from '../components/Navbar';
 
 interface Course {
-  id: string;
+  _id: string;
   title: string;
-  level: 'Beginner' | 'Intermediate' | 'Advanced';
-  category: string;
-  duration: string;
-  rating: number;
-  students: string;
-  instructor: string;
-  image: string;
   description: string;
-  features: string[];
+  category: string;
+  level: 'beginner' | 'intermediate' | 'advanced';
+  status: "draft" | "pending" | "approved" | "rejected" | "reported";
+  studentsEnrolled: number;
+  createdAt: string;
+  updatedAt: string;
+  thumbnail?: string;
+  materials: any[];
+  instructor: {
+    _id: string;
+    name: string;
+    email: string;
+  };
 }
 
-const mockCourses: Course[] = [
-  {
-    id: '1',
-    title: 'Complete Web Development Bootcamp',
-    level: 'Intermediate',
-    category: 'Development',
-    duration: '12 weeks',
-    rating: 4.8,
-    students: '15,420',
-    instructor: 'Sarah Johnson',
-    image: '/images/placeholder-web.jpg',
-    description: 'Learn HTML, CSS, JavaScript, React, Node.js, and MongoDB. Build real-world projects and become a full-stack developer.',
-    features: ['Certificate included', 'Hands-on projects', 'Lifetime access', 'Mobile friendly'],
-  },
-  {
-    id: '2',
-    title: 'Data Science with Python',
-    level: 'Advanced',
-    category: 'Data Science',
-    duration: '10 weeks',
-    rating: 4.9,
-    students: '8,930',
-    instructor: 'Dr. Michael Chen',
-    image: '/images/placeholder-data.jpg',
-    description: 'Master data analysis, visualization, and machine learning with Python. Work with real datasets and build predictive models.',
-    features: ['Certificate included', 'Hands-on projects', 'Lifetime access'],
-  },
-  {
-    id: '3',
-    title: 'Digital Marketing Fundamentals',
-    level: 'Beginner',
-    category: 'Marketing',
-    duration: '6 weeks',
-    rating: 4.7,
-    students: '12,300',
-    instructor: 'Emma Rodriguez',
-    image: '/images/placeholder-marketing.jpg',
-    description: 'Learn SEO, social media marketing, email campaigns, and analytics. Create effective marketing strategies for any business.',
-    features: ['Certificate included', 'Lifetime access', 'Mobile friendly'],
-  },
-];
-
-const categories = ['All Categories', 'Development', 'Data Science', 'Design', 'Marketing', 'Business'];
+const categories = ['All Categories', 'Programming', 'Data Science', 'Design', 'Business', 'Marketing', 'Music', 'Photography', 'Health & Fitness'];
 const levels = ['All Levels', 'Beginner', 'Intermediate', 'Advanced'];
-const features = ['Certificate included', 'Hands-on projects', 'Lifetime access', 'Mobile friendly'];
+
+
 
 export default function CourseCatalog() {
+  const router = useRouter();
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
   const [selectedLevel, setSelectedLevel] = useState('All Levels');
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState('Most Popular');
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filteredCourses = mockCourses.filter((course) => {
-    const matchesSearch = course.title.toLowerCase().includes(search.toLowerCase());
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch('/auth/api/courses');
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch courses');
+        }
+        
+        const data = await response.json();
+        console.log('Fetched courses data:', data);
+        
+        // The API already returns only approved courses, so no need to filter again
+        setCourses(data.courses || []);
+        
+        console.log('Courses set:', data.courses);
+      } catch (error) {
+        console.error('Error fetching courses:', error);
+        setCourses([]); // Set empty array on error
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCourses();
+  }, []);
+
+  const filteredCourses = courses.filter((course) => {
+    const matchesSearch = course.title.toLowerCase().includes(search.toLowerCase()) || 
+                         course.description.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = selectedCategory === 'All Categories' || course.category === selectedCategory;
-    const matchesLevel = selectedLevel === 'All Levels' || course.level === selectedLevel;
-    const matchesFeatures =
-      selectedFeatures.length === 0 || selectedFeatures.every((f) => course.features.includes(f));
-    return matchesSearch && matchesCategory && matchesLevel && matchesFeatures;
+    const matchesLevel = selectedLevel === 'All Levels' || 
+                        course.level.toLowerCase() === selectedLevel.toLowerCase();
+    
+    return matchesSearch && matchesCategory && matchesLevel;
   });
 
   return (
@@ -122,7 +120,15 @@ export default function CourseCatalog() {
                   <h3 className="text-lg font-semibold text-gray-800 flex items-center">
                     <FunnelIcon className="h-5 w-5 mr-2 text-indigo-600" /> Filters
                   </h3>
-                  <button className="text-indigo-600 hover:text-indigo-800 text-sm">
+                  <button 
+                    className="text-indigo-600 hover:text-indigo-800 text-sm"
+                    onClick={() => {
+                      setSelectedCategory('All Categories');
+                      setSelectedLevel('All Levels');
+                      setSelectedFeatures([]);
+                      setSearch('');
+                    }}
+                  >
                     Clear Filters
                   </button>
                 </div>
@@ -159,29 +165,8 @@ export default function CourseCatalog() {
                   </select>
                 </div>
 
-                {/* Features */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Features</label>
-                  <div className="space-y-2">
-                    {features.map((feat) => (
-                      <label key={feat} className="flex items-center text-sm text-gray-700">
-                        <input
-                          type="checkbox"
-                          checked={selectedFeatures.includes(feat)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedFeatures((prev) => [...prev, feat]);
-                            } else {
-                              setSelectedFeatures((prev) => prev.filter((f) => f !== feat));
-                            }
-                          }}
-                          className="mr-2 h-4 w-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
-                        />
-                        {feat}
-                      </label>
-                    ))}
-                  </div>
-                </div>
+           
+                
               </div>
             </aside>
 
@@ -202,67 +187,115 @@ export default function CourseCatalog() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredCourses.map((course) => (
-                  <div
-                    key={course.id}
-                    className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-                  >
-                    <div className="h-48 bg-gradient-to-r from-indigo-500 to-purple-600 relative">
-                      <Image src={course.image} alt={course.title} fill className="object-cover" />
-                      <span
-                        className={`absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-bold text-white ${
-                          course.level === 'Beginner'
-                            ? 'bg-emerald-500'
-                            : course.level === 'Intermediate'
-                            ? 'bg-yellow-500'
-                            : 'bg-red-500'
-                        }`}
+            
+             
+              {isLoading ? (
+                <div className="flex justify-center items-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredCourses.length > 0 ? (
+                    filteredCourses.map((course) => (
+                      <div
+                        key={course._id}
+                        className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                       >
-                        {course.level}
-                      </span>
-                      <span className="absolute top-3 left-3 px-3 py-1 bg-emerald-500 text-white text-xs font-bold rounded-full">
-                        {course.category}
-                      </span>
-                    </div>
-
-                    <div className="p-6">
-                      <h3 className="text-xl font-bold text-gray-800 mb-2">{course.title}</h3>
-                      <p className="text-sm text-gray-600 mb-3">{course.description}</p>
-
-                      <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
-                        <span>
-                          <ClockIcon className="inline h-4 w-4 mr-1" />
-                          {course.duration}
-                        </span>
-                        <span>
-                          <StarIcon className="inline h-4 w-4 mr-1 text-yellow-400" />
-                          {course.rating} ({course.students})
-                        </span>
-                      </div>
-
-                      <div className="flex items-center mb-4">
-                        <div className="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                          {course.instructor
-                            .split(' ')
-                            .map((n) => n[0])
-                            .join('')}
+                        <div className="h-48 bg-gradient-to-r from-indigo-500 to-purple-600 relative">
+                          {course.thumbnail ? (
+                            <Image 
+                              src={course.thumbnail} 
+                              alt={course.title} 
+                              fill 
+                              className="object-cover"
+                              onError={(e) => {
+                                // Fallback if image fails to load
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+                              <BookOpenIcon className="h-12 w-12 text-gray-400" />
+                            </div>
+                          )}
+                          <span
+                            className={`absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-bold text-white ${
+                              course.level === 'beginner'
+                                ? 'bg-emerald-500'
+                                : course.level === 'intermediate'
+                                ? 'bg-yellow-500'
+                                : 'bg-red-500'
+                            }`}
+                          >
+                            {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
+                          </span>
+                          <span className="absolute top-3 left-3 px-3 py-1 bg-indigo-500 text-white text-xs font-bold rounded-full">
+                            {course.category}
+                          </span>
                         </div>
-                        <span className="ml-3 text-sm text-gray-700">{course.instructor}</span>
-                      </div>
 
-                      {/* View Course Button – Full Width */}
-                      <button className="w-full bg-indigo-600 text-white py-2.5 rounded-lg hover:bg-indigo-700 transition flex items-center justify-center">
-                        <PlayIcon className="h-4 w-4 mr-2" /> View Course
-                      </button>
+                        <div className="p-6">
+                          <h3 className="text-xl font-bold text-gray-800 mb-2">{course.title}</h3>
+                          <p className="text-sm text-gray-600 mb-3 line-clamp-2">{course.description}</p>
+
+                          <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
+                            <span>
+                              <ClockIcon className="inline h-4 w-4 mr-1" />
+                              Self-paced
+                            </span>
+                            <span>
+                              <StarIcon className="inline h-4 w-4 mr-1 text-yellow-400" />
+                              {course.studentsEnrolled} students
+                            </span>
+                          </div>
+
+                          <div className="flex items-center mb-4">
+                            <div className="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                              {course.instructor.name
+                                .split(' ')
+                                .map((n) => n[0])
+                                .join('')}
+                            </div>
+                            <span className="ml-3 text-sm text-gray-700">{course.instructor.name}</span>
+                          </div>
+
+                         <button 
+  onClick={() => router.push(`/courses/${course._id}`)}
+  className="w-full bg-indigo-600 text-white py-2.5 rounded-lg hover:bg-indigo-700 transition flex items-center justify-center"
+>
+  <PlayIcon className="h-4 w-4 mr-2" /> View Course
+</button>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="col-span-3 text-center py-12">
+                      <BookOpenIcon className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+                      <h3 className="text-xl font-semibold text-gray-800 mb-2">No courses found</h3>
+                      <p className="text-gray-600">
+                        {courses.length === 0 
+                          ? "No courses available at the moment." 
+                          : "Try adjusting your search or filters."
+                        }
+                      </p>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </section>
       </main>
+
+      <style jsx>{`
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+      `}</style>
     </div>
   );
 }

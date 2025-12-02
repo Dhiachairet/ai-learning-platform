@@ -13,6 +13,10 @@ const userSchema = new mongoose.Schema({
   },
   educationLevel: { type: String },
   expertiseArea: { type: [String], default: [] },
+   enrolledCourses: [{
+    course: { type: mongoose.Schema.Types.ObjectId, ref: 'Course' },
+    enrolledAt: { type: Date, default: Date.now }
+  }]
 }, {
   timestamps: true
 });

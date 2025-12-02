@@ -136,6 +136,37 @@ const handleFileUpload = async (file: File, type: 'pdf' | 'image') => {
     }, 1000);
   }
 };
+const handleThumbnailUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  console.log('Thumbnail file selected:', file.name, file.type, file.size);
+  setUploadError(null);
+
+  // Validate file type
+  if (!file.type.startsWith('image/')) {
+    const errorMsg = `Please select an image file. Selected file type: ${file.type}`;
+    setUploadError(errorMsg);
+    alert(errorMsg);
+    return;
+  }
+
+  try {
+    const uploadedUrl = await handleFileUpload(file, 'image');
+    
+    // Set the uploaded thumbnail URL
+    setFormData({
+      ...formData,
+      thumbnail: uploadedUrl
+    });
+    
+  } catch (error) {
+    console.error('Thumbnail upload error:', error);
+    // Reset file input on error
+    const fileInput = document.getElementById('thumbnail-input') as HTMLInputElement;
+    if (fileInput) fileInput.value = '';
+  }
+};
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>, materialType: 'pdf' | 'image') => {
     const file = event.target.files?.[0];
@@ -273,7 +304,7 @@ const handleFileUpload = async (file: File, type: 'pdf' | 'image') => {
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen px-4 py-8">
+      <div className="flex items-center justify-center min-h-screen p-4">
         {/* Backdrop */}
         <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
@@ -281,7 +312,7 @@ const handleFileUpload = async (file: File, type: 'pdf' | 'image') => {
         />
 
         {/* Modal */}
-      <div className="relative z-10 w-full max-w-4xl mx-auto lg:ml-80 transform transition-all">
+      <div className="relative z-10 w-full max-w-4xl mx-auto transform transition-all">
           <div className="relative z-10 w-full max-w-4xl mx-auto p-6 bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl animate-slideUp text-gray-900">
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -303,9 +334,9 @@ const handleFileUpload = async (file: File, type: 'pdf' | 'image') => {
             </div>
 
             <form onSubmit={onSubmit}>
-              <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
+              <div className="space-y-6 max-h-[70vh] overflow-y-auto p-6">
                 {/* Basic Information */}
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <h4 className="text-md font-semibold text-gray-900 border-b pb-2">Basic Information</h4>
                   
                   <div>
@@ -376,22 +407,60 @@ const handleFileUpload = async (file: File, type: 'pdf' | 'image') => {
                     </div>
                   </div>
 
-                  <div>
-                    <label htmlFor="thumbnail" className="block text-sm font-medium text-gray-700">
-                      Thumbnail URL
-                    </label>
-                    <input
-                      type="url"
-                      id="thumbnail"
-                      value={formData.thumbnail}
-                      onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
-                      className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/95"
-                      placeholder="https://example.com/image.jpg"
-                    />
-                    <p className="text-sm text-gray-500 mt-1">
-                      Optional: Add a thumbnail image URL for your course
-                    </p>
-                  </div>
+                
+
+<div>
+  <label htmlFor="thumbnail" className="block text-sm font-medium text-gray-700">
+    Thumbnail *
+  </label>
+  
+  {/* Thumbnail Upload Section */}
+  <div className="space-y-2">
+    {/* File Input */}
+    <input
+      id="thumbnail-input"
+      type="file"
+      accept="image/*"
+      onChange={(e) => handleThumbnailUpload(e)}
+      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+      disabled={uploading}
+    />
+    
+    {/* Upload Progress */}
+    {uploading && (
+      <div className="space-y-1">
+        <div className="w-full bg-gray-200 rounded-full h-2">
+          <div 
+            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+            style={{ width: `${uploadProgress}%` }}
+          ></div>
+        </div>
+        <p className="text-xs text-gray-500">Uploading thumbnail... {uploadProgress}%</p>
+      </div>
+    )}
+    
+    {/* Current Thumbnail Display */}
+    {formData.thumbnail && (
+      <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+        <p className="text-sm text-green-800 mb-2">
+          <strong>Thumbnail ready:</strong> {formData.thumbnail.split('/').pop()}
+        </p>
+        <div className="flex items-center space-x-2">
+          <img 
+            src={formData.thumbnail} 
+            alt="Course thumbnail" 
+            className="h-12 w-12 object-cover rounded border"
+          />
+          <span className="text-xs text-green-600">Preview</span>
+        </div>
+      </div>
+    )}
+    
+    <p className="text-xs text-gray-500">
+      Upload a thumbnail image for your course (max 10MB)
+    </p>
+  </div>
+</div>
                 </div>
 
                 {/* Course Materials */}
@@ -408,7 +477,7 @@ const handleFileUpload = async (file: File, type: 'pdf' | 'image') => {
                   )}
                   
                   {/* Add New Material */}
-                  <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+                  <div className="bg-gray-50 p-4 rounded-lg space-y-6">
                     <h5 className="text-sm font-medium text-gray-700">Add New Material</h5>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -514,6 +583,7 @@ const handleFileUpload = async (file: File, type: 'pdf' | 'image') => {
                         disabled={uploading}
                       />
                     </div>
+                    
 
                     <button
                       type="button"
@@ -836,6 +906,10 @@ export default function InstructorCourses() {
 
   const handleSubmitAddCourse = async (e: React.FormEvent) => {
     e.preventDefault();
+      if (!formData.thumbnail) {
+    showToast("Please upload a thumbnail image for the course", "error");
+    return;
+  }
     setIsSubmitting(true);
 
     try {
@@ -901,7 +975,11 @@ export default function InstructorCourses() {
   const handleSubmitEditCourse = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedCourse) return;
-
+ // Add this validation check here
+  if (!formData.thumbnail) {
+    showToast("Please upload a thumbnail image for the course", "error");
+    return;
+  }
     setIsSubmitting(true);
 
     try {

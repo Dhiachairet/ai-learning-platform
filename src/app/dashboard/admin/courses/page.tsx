@@ -48,7 +48,7 @@ interface Course {
   };
   category: string;
   level: "beginner" | "intermediate" | "advanced";
-  duration: number;
+ 
   studentsEnrolled: number;
   rating: number;
   status: "draft" | "pending" | "approved" | "rejected" | "reported";
@@ -117,7 +117,7 @@ const CourseDetailsModal = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       
-      <div className="relative z-10 w-full max-w-4xl mx-auto lg:ml-80 p-6">
+     <div className="relative z-10 w-full max-w-6xl mx-auto">
         <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl border border-white/30 p-6 animate-slideUp max-h-[90vh] overflow-y-auto">
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -134,62 +134,79 @@ const CourseDetailsModal = ({
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Basic Information */}
-            <div className="space-y-4">
-              <h4 className="text-lg font-semibold text-gray-900 border-b pb-2">Basic Information</h4>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Course Title</label>
-                <p className="mt-1 text-sm text-gray-900 font-medium">{course.title}</p>
-              </div>
+<div className="space-y-4">
+  <h4 className="text-lg font-semibold text-gray-900 border-b pb-2">Basic Information</h4>
+  
+  {/* Thumbnail Display */}
+  {course.thumbnail && (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-3">Course Thumbnail</label>
+      <div className="flex items-center space-x-4">
+        <img 
+          src={course.thumbnail} 
+          alt={`${course.title} thumbnail`}
+          className="h-40 w-56 object-cover rounded-lg border-2 border-gray-200 shadow-sm"
+          onError={(e) => {
+            // Fallback if image fails to load
+            (e.target as HTMLImageElement).style.display = 'none';
+          }}
+        />
+        <div className="text-xs text-gray-500">
+          <p>Uploaded thumbnail preview</p>
+          <p className="mt-1 truncate max-w-xs">{course.thumbnail.split('/').pop()}</p>
+        </div>
+      </div>
+    </div>
+  )}
+  
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-2">Course Title</label>
+    <p className="mt-1 text-sm text-gray-900 font-medium">{course.title}</p>
+  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Description</label>
-                <p className="mt-1 text-sm text-gray-900">{course.description}</p>
-              </div>
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+    <p className="mt-1 text-sm text-gray-900">{course.description}</p>
+  </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Category</label>
-                  <p className="mt-1 text-sm text-gray-900">{course.category}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Level</label>
-                  <span className={`inline-flex mt-1 px-2 py-1 text-xs font-semibold rounded-full ${getLevelColor(course.level)}`}>
-                    {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Duration</label>
-                <p className="mt-1 text-sm text-gray-900">{course.duration} hours</p>
-              </div>
-            </div>
+  <div className="grid grid-cols-2 gap-4">
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+      <p className="mt-1 text-sm text-gray-900">{course.category}</p>
+    </div>
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">Level</label>
+      <span className={`inline-flex mt-1 px-2 py-1 text-xs font-semibold rounded-full ${getLevelColor(course.level)}`}>
+        {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
+      </span>
+    </div>
+  </div>
+</div>
 
             {/* Instructor & Status */}
             <div className="space-y-4">
               <h4 className="text-lg font-semibold text-gray-900 border-b pb-2">Instructor & Status</h4>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700">Instructor Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Instructor Name</label>
                 <p className="mt-1 text-sm text-gray-900">{course.instructor.name}</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Instructor Email</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Instructor Email</label>
                 <p className="mt-1 text-sm text-gray-900">{course.instructor.email}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Students Enrolled</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Students Enrolled</label>
                   <p className="mt-1 text-sm text-gray-900 flex items-center">
                     <UserGroupIcon className="h-4 w-4 mr-1 text-gray-400" />
                     {(course.studentsEnrolled || 0).toLocaleString()}
                   </p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Rating</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
                   <p className="mt-1 text-sm text-gray-900">
                     {course.rating > 0 ? `${course.rating}/5.0` : 'No ratings yet'}
                   </p>
@@ -198,19 +215,19 @@ const CourseDetailsModal = ({
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Status</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
                   <span className={`inline-flex mt-1 px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(course.status)}`}>
                     {course.status.charAt(0).toUpperCase() + course.status.slice(1)}
                   </span>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Created</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Created</label>
                   <p className="mt-1 text-sm text-gray-900">{formatDate(course.createdAt)}</p>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Last Updated</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Last Updated</label>
                 <p className="mt-1 text-sm text-gray-900">{formatDate(course.updatedAt)}</p>
               </div>
             </div>
@@ -411,138 +428,14 @@ export default function CourseManagement() {
     } catch (err) {
       console.error("Error fetching courses:", err);
       setError("Failed to load courses data. Please try again.");
-      loadMockData();
+     
     } finally {
       setIsLoading(false);
     }
   };
 
   // Mock data for demonstration (with materials)
-  const loadMockData = () => {
-    const mockCourses: Course[] = [
-      {
-        _id: "1",
-        title: "Introduction to React",
-        description: "Learn the fundamentals of React and build your first application",
-        instructor: {
-          _id: "2",
-          name: "Sarah Johnson",
-          email: "sarah.j@example.com"
-        },
-        category: "Programming",
-        level: "beginner",
-        duration: 15,
-        studentsEnrolled: 1245,
-        rating: 4.7,
-        status: "approved",
-        createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-        materials: [
-          {
-            type: 'pdf',
-            url: '/uploads/1701234567890-react-course-syllabus.pdf',
-            title: 'Course Syllabus',
-            description: 'Complete course outline and learning objectives'
-          },
-          {
-            type: 'youtube',
-            url: 'https://www.youtube.com/watch?v=abcdefghijk',
-            title: 'Introduction to React',
-            description: 'Getting started with React components'
-          }
-        ]
-      },
-      {
-        _id: "2",
-        title: "Advanced Machine Learning",
-        description: "Deep dive into machine learning algorithms and neural networks",
-        instructor: {
-          _id: "5",
-          name: "Dr. Robert Wilson",
-          email: "robert.w@example.com"
-        },
-        category: "Data Science",
-        level: "advanced",
-        duration: 40,
-        studentsEnrolled: 567,
-        rating: 4.9,
-        status: "approved",
-        createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-        materials: [
-          {
-            type: 'pdf',
-            url: '/uploads/1701234567891-ml-textbook.pdf',
-            title: 'ML Textbook',
-            description: 'Complete machine learning reference'
-          },
-          {
-            type: 'image',
-            url: '/uploads/1701234567892-neural-network.png',
-            title: 'Neural Network Architecture',
-            description: 'Diagram of neural network layers'
-          }
-        ]
-      },
-      {
-        _id: "3",
-        title: "Web Design Fundamentals",
-        description: "Master the principles of modern web design and UX",
-        instructor: {
-          _id: "2",
-          name: "Sarah Johnson",
-          email: "sarah.j@example.com"
-        },
-        category: "Design",
-        level: "beginner",
-        duration: 12,
-        studentsEnrolled: 0,
-        rating: 0,
-        status: "pending",
-        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-        materials: []
-      },
-      {
-        _id: "4",
-        title: "Node.js Backend Development",
-        description: "Build scalable backend applications with Node.js and Express",
-        instructor: {
-          _id: "5",
-          name: "Dr. Robert Wilson",
-          email: "robert.w@example.com"
-        },
-        category: "Programming",
-        level: "intermediate",
-        duration: 25,
-        studentsEnrolled: 892,
-        rating: 4.6,
-        status: "approved",
-        createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-        materials: [
-          {
-            type: 'pdf',
-            url: '/uploads/1701234567893-nodejs-guide.pdf',
-            title: 'Node.js Setup Guide',
-            description: 'Environment setup and configuration'
-          }
-        ]
-      }
-    ];
-
-    const mockStats: CourseStats = {
-      totalCourses: 156,
-      pendingCourses: 12,
-      approvedCourses: 128,
-      rejectedCourses: 8,
-      reportedCourses: 8,
-      totalEnrollments: 45890,
-    };
-
-    setCourses(mockCourses);
-    setStats(mockStats);
-  };
+ 
 
   // Check authentication and load data
   useEffect(() => {
@@ -912,7 +805,7 @@ export default function CourseManagement() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instructor</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                     
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Students</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -943,9 +836,7 @@ export default function CourseManagement() {
                               {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {course.duration} hours
-                          </td>
+                          
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             <div className="flex items-center">
                               <UserGroupIcon className="h-4 w-4 mr-1 text-gray-400" />
