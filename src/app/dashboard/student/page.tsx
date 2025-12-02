@@ -16,6 +16,7 @@ import {
   UserGroupIcon,
   CalendarIcon,
 } from "@heroicons/react/24/outline";
+import { set } from "mongoose";
 
 interface EnrolledCourse {
   _id: string;
@@ -58,13 +59,15 @@ export default function StudentDashboard() {
   const [stats, setStats] = useState<StudentStats | null>(null);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
 
   const router = useRouter();
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard/student", icon: ChartBarIcon, current: true },
-    { name: "My Courses", href: "/dashboard/student/courses", icon: BookOpenIcon, current: false },
-    { name: "Progress", href: "/dashboard/student/progress", icon: ClockIcon, current: false },
+    { name: "My Courses", href: "/dashboard/student/mycourses", icon: BookOpenIcon, current: false },
+
     { name: "Settings", href: "/dashboard/student/settings", icon: CogIcon, current: false },
   ];
 
@@ -142,6 +145,8 @@ export default function StudentDashboard() {
           router.push('/');
           return;
         }
+        setUsername(payload.name || 'Student');
+        setEmail(payload.email || '');
 
         await fetchStudentData();
       } catch (error) {
@@ -272,7 +277,7 @@ export default function StudentDashboard() {
               </li>
               <li className="mt-auto">
                 <div className="p-3 text-sm text-gray-600 border-t border-gray-200">
-                  <div className="font-medium text-gray-900">Student</div>
+                  <div className="font-medium text-gray-900">{email}</div>
                 </div>
                 <button 
                   onClick={handleLogout} 
@@ -297,7 +302,7 @@ export default function StudentDashboard() {
 
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6 justify-end">
             <div className="flex items-center gap-x-4 lg:gap-x-6">
-              <span className="text-sm text-gray-700">Student</span>
+              <span className="text-sm text-gray-700">{username}</span>
               <button onClick={handleLogout} className="text-sm font-semibold text-red-600 hover:text-red-700">Logout</button>
             </div>
           </div>
@@ -373,7 +378,7 @@ export default function StudentDashboard() {
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-semibold text-gray-900">My Courses</h2>
                   <button 
-                    onClick={() => router.push('/dashboard/student/courses')}
+                    onClick={() => router.push('/dashboard/student/mycourses')}
                     className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                   >
                     View All

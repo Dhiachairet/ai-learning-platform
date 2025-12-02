@@ -83,6 +83,14 @@ export default function Navbar() {
                     Admin Dashboard
                   </a>
                 )}
+                {user.role === 'student' && (
+                  <a
+                    href="/dashboard/student"
+                    className="px-3 py-1 bg-green-100 text-green-700 rounded-md hover:bg-green-200 text-sm"
+                  >
+                    Student Dashboard
+                  </a>
+                )}
                 <button
                   onClick={handleLogout}
                   className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm"
