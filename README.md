@@ -1,39 +1,55 @@
 # LearnAI Hub
 
-An e-learning platform built with Next.js and MongoDB, featuring an AI chatbot for student assistance.
+An e-learning platform with contextual AI assistance for students.
 
-## What it does
+## What It Does
 
-LearnAI Hub is a course management system with three user roles:
+LearnAI Hub lets students enroll in courses, track progress, and get help from an AI assistant that understands exactly which course they're in.
 
-- **Students** can browse courses, track progress, and ask the AI assistant for help
-- **Instructors** can create courses, upload materials, and manage quizzes
-- **Admins** can oversee users, approve courses, and view platform analytics
+Three user roles:
+- **Students**: Browse courses, complete lessons, take quizzes, use AI chat
+- **Instructors**: Create courses, upload materials, manage students
+- **Admins**: Manage users, approve courses, view analytics
 
-The AI chatbot uses course context to provide relevant answers based on what the student is currently learning.
+## Screenshots
+
+### Student View
+| Student Dashboard | Student Courses |
+|:---:|:---:|
+| ![Student Dashboard](./screenshots/studentdashboard.png) | ![Student Courses](./screenshots/studentcourses.png) |
+
+### Instructor View
+| Instructor Dashboard | Instructor Courses |
+|:---:|:---:|
+| ![Instructor Dashboard](./screenshots/instructordashboard.png) | ![Instructor Courses](./screenshots/instructorcourses.png) |
+
+### Admin View
+| Admin Dashboard | Course Management |
+|:---:|:---:|
+| ![Admin Dashboard](./screenshots/admindashboard.png) | ![Course Management](./screenshots/admincoursemanagement.png) |
+
+| Course Details |
+|:---:|
+| ![Course Details](./screenshots/admincoursedetails.png) |
 
 ## Tech Stack
 
 - Next.js 15 (App Router)
 - Tailwind CSS
-- MongoDB with Mongoose
-- JWT authentication
+- MongoDB + Mongoose
+- JWT Authentication
 - Google OAuth
-- Gemini API (AI chatbot)
-
-## Screenshots
-
-[Add 2-3 clean screenshots here - dashboard, course view, admin panel]
+- Gemini API
 
 ## Getting Started
 
 ### Requirements
 - Node.js 18+
-- MongoDB database
+- MongoDB database (local or Atlas)
 
 ### Installation
 
 ```bash
-git clone https://github.com/yourusername/learnai-hub
+git clone https://github.com/yourusername/learnai-hub.git
 cd learnai-hub
 npm install
