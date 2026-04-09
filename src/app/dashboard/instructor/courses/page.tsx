@@ -23,6 +23,8 @@ import {
   DocumentIcon,
   PhotoIcon,
   FilmIcon,
+  Squares2X2Icon,
+  ListBulletIcon,
 } from "@heroicons/react/24/outline";
 
 interface CourseMaterial {
@@ -30,6 +32,11 @@ interface CourseMaterial {
   url: string;
   title: string;
   description: string;
+}
+interface QuizQuestion {
+  question: string;
+  options: string[];
+  correctAnswer: number;
 }
 
 interface Course {
@@ -44,6 +51,7 @@ interface Course {
   updatedAt: string;
   thumbnail?: string;
   materials: CourseMaterial[];
+  quizzes: QuizQuestion[];
 }
 
 interface CourseStats {
@@ -51,7 +59,7 @@ interface CourseStats {
   publishedCourses: number;
   draftCourses: number;
   pendingCourses: number;
-  totalStudents: number;
+ 
 }
 
 interface CourseFormData {
@@ -62,6 +70,7 @@ interface CourseFormData {
   status: "draft" | "pending";
   thumbnail: string;
   materials: CourseMaterial[];
+  quizzes: QuizQuestion[];
 }
 
 // CourseModal component with improved file upload
@@ -93,6 +102,11 @@ const CourseModal = ({
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
+   const [newQuizQuestion, setNewQuizQuestion] = useState<QuizQuestion>({
+    question: '',
+    options: ['', '', '', ''],
+    correctAnswer: 0,
+  });
 
 const handleFileUpload = async (file: File, type: 'pdf' | 'image') => {
   setUploading(true);
@@ -303,7 +317,7 @@ const handleThumbnailUpload = async (event: React.ChangeEvent<HTMLInputElement>)
   ];
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+    <div className="fixed inset-0 z-[60] overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen p-4">
         {/* Backdrop */}
         <div
@@ -639,6 +653,143 @@ const handleThumbnailUpload = async (event: React.ChangeEvent<HTMLInputElement>)
                     </div>
                   )}
                 </div>
+                {/* Course Quizzes */}
+<div className="space-y-4">
+  <h4 className="text-md font-semibold text-gray-900 border-b pb-2">Course Quiz</h4>
+  
+  {/* Add New Quiz Question */}
+  <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+    <h5 className="text-sm font-medium text-gray-700">Add Quiz Question</h5>
+    
+    {/* Question Input */}
+    <div>
+      <label className="block text-sm font-medium text-gray-700">Question *</label>
+      <input
+        type="text"
+        value={newQuizQuestion.question}
+        onChange={(e) => setNewQuizQuestion({ ...newQuizQuestion, question: e.target.value })}
+        className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        placeholder="Enter the question"
+      />
+    </div>
+    
+    {/* Options Inputs */}
+    <div className="space-y-3">
+      <label className="block text-sm font-medium text-gray-700">Options * (4 options required)</label>
+      {newQuizQuestion.options.map((option, index) => (
+        <div key={index} className="flex items-center space-x-3">
+          <input
+            type="radio"
+            name="correctAnswer"
+            checked={newQuizQuestion.correctAnswer === index}
+            onChange={() => setNewQuizQuestion({ ...newQuizQuestion, correctAnswer: index })}
+            className="h-4 w-4 text-blue-600"
+          />
+          <input
+            type="text"
+            value={option}
+            onChange={(e) => {
+              const newOptions = [...newQuizQuestion.options];
+              newOptions[index] = e.target.value;
+              setNewQuizQuestion({ ...newQuizQuestion, options: newOptions });
+            }}
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder={`Option ${index + 1}`}
+          />
+        </div>
+      ))}
+      <p className="text-xs text-gray-500">Select the radio button next to the correct answer</p>
+    </div>
+    
+    {/* Add Question Button */}
+    <button
+      type="button"
+      onClick={() => {
+        if (!newQuizQuestion.question.trim()) {
+          alert('Please enter a question');
+          return;
+        }
+        if (newQuizQuestion.options.some(opt => !opt.trim())) {
+          alert('Please fill all 4 options');
+          return;
+        }
+        
+        setFormData({
+          ...formData,
+          quizzes: [...formData.quizzes, { ...newQuizQuestion }]
+        });
+        
+        // Reset form
+        setNewQuizQuestion({
+          question: '',
+          options: ['', '', '', ''],
+          correctAnswer: 0,
+        });
+      }}
+      disabled={!newQuizQuestion.question || newQuizQuestion.options.some(opt => !opt)}
+      className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      Add Quiz Question
+    </button>
+  </div>
+  
+  {/* Quiz Questions List */}
+  {formData.quizzes.length > 0 && (
+    <div className="space-y-3">
+      <h5 className="text-sm font-medium text-gray-700">
+        Quiz Questions ({formData.quizzes.length})
+      </h5>
+      {formData.quizzes.map((quiz, index) => (
+        <div key={index} className="bg-white border border-gray-200 rounded-lg p-4">
+          <div className="flex justify-between items-start mb-3">
+            <div className="flex-1">
+              <div className="text-sm font-medium text-gray-900">
+                Q{index + 1}: {quiz.question}
+              </div>
+              <div className="mt-2 space-y-1">
+                {quiz.options.map((option, optIndex) => (
+                  <div key={optIndex} className="flex items-center">
+                    <span className={`inline-block w-4 h-4 mr-2 rounded-full ${optIndex === quiz.correctAnswer ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                    <span className={`text-sm ${optIndex === quiz.correctAnswer ? 'text-green-600 font-medium' : 'text-gray-600'}`}>
+                      {option}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="flex space-x-2 ml-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setNewQuizQuestion({ ...quiz });
+                  const updatedQuizzes = formData.quizzes.filter((_, i) => i !== index);
+                  setFormData({ ...formData, quizzes: updatedQuizzes });
+                }}
+                className="text-blue-600 hover:text-blue-800 p-1"
+                title="Edit Question"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const updatedQuizzes = formData.quizzes.filter((_, i) => i !== index);
+                  setFormData({ ...formData, quizzes: updatedQuizzes });
+                }}
+                className="text-red-600 hover:text-red-800 p-1"
+                title="Remove Question"
+              >
+                <TrashIcon className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
+</div>
 
                 {/* Status */}
                 <div>
@@ -733,6 +884,7 @@ const DeleteModal = ({
 
 export default function InstructorCourses() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userName, setUserName] = useState("Instructor");
   const [isLoading, setIsLoading] = useState(true);
   const [courses, setCourses] = useState<Course[]>([]);
   const [stats, setStats] = useState<CourseStats | null>(null);
@@ -741,6 +893,7 @@ export default function InstructorCourses() {
   const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "pending" | "approved" | "rejected">("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [coursesPerPage] = useState(10);
+  const [viewMode, setViewMode] = useState<"table" | "grid">("table");
 
   // Modal states
   const [showAddModal, setShowAddModal] = useState(false);
@@ -753,7 +906,8 @@ export default function InstructorCourses() {
     level: "beginner",
     status: "draft",
     thumbnail: "",
-    materials: []
+    materials: [],
+    quizzes: []
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -773,8 +927,7 @@ export default function InstructorCourses() {
   const navigation = [
     { name: "Dashboard", href: "/dashboard/instructor", icon: ChartBarIcon, current: false },
     { name: "My Courses", href: "/dashboard/instructor/courses", icon: BookOpenIcon, current: true },
-    { name: "Students", href: "/dashboard/instructor/students", icon: UserGroupIcon, current: false },
-    { name: "Settings", href: "/dashboard/instructor/settings", icon: CogIcon, current: false },
+    
   ];
 
   // Fetch courses data
@@ -809,7 +962,7 @@ export default function InstructorCourses() {
         publishedCourses: 0,
         draftCourses: 0,
         pendingCourses: 0,
-        totalStudents: 0
+       
       });
     } catch (err) {
       console.error("Error fetching courses:", err);
@@ -820,7 +973,7 @@ export default function InstructorCourses() {
         publishedCourses: 0,
         draftCourses: 0,
         pendingCourses: 0,
-        totalStudents: 0
+        
       });
     } finally {
       setIsLoading(false);
@@ -850,6 +1003,10 @@ export default function InstructorCourses() {
         if (payload.role !== 'instructor') {
           router.push('/');
           return;
+        }
+        
+        if (payload.name) {
+          setUserName(payload.name);
         }
 
         await fetchCourses();
@@ -899,7 +1056,8 @@ export default function InstructorCourses() {
       level: "beginner",
       status: "draft",
       thumbnail: "",
-      materials: []
+      materials: [],
+      quizzes: []
     });
     setShowAddModal(true);
   };
@@ -942,7 +1100,8 @@ export default function InstructorCourses() {
         level: "beginner", 
         status: "draft", 
         thumbnail: "",
-        materials: [] 
+        materials: [] ,
+        quizzes: []
       });
 
       showToast("Course created successfully!", "success");
@@ -967,7 +1126,8 @@ export default function InstructorCourses() {
       level: course.level,
       status: course.status as "draft" | "pending",
       thumbnail: course.thumbnail || "",
-      materials: course.materials || []
+      materials: course.materials || [],
+      quizzes: course.quizzes || []
     });
     setShowEditModal(true);
   };
@@ -1016,7 +1176,8 @@ export default function InstructorCourses() {
         level: "beginner", 
         status: "draft", 
         thumbnail: "",
-        materials: [] 
+        materials: [] ,
+        quizzes: []
       });
 
       showToast("Course updated successfully!", "success");
@@ -1166,17 +1327,18 @@ export default function InstructorCourses() {
       {/* Mobile sidebar */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="fixed inset-0 bg-gray-900/80" onClick={() => setSidebarOpen(false)} />
-          <div className="fixed inset-y-0 left-0 w-80 bg-white shadow-xl">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h1 className="text-2xl font-bold" style={{ color: '#667eea' }}>
+          <div className="fixed inset-0 bg-gray-900/80 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
+          <div className="fixed inset-y-0 left-0 w-80 bg-gradient-to-b from-indigo-900 to-indigo-950 shadow-2xl">
+            <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5" />
+            <div className="relative flex items-center justify-between p-6 border-b border-indigo-800/50">
+              <h1 className="text-2xl font-bold text-white">
                 LearnAI Hub
               </h1>
-              <button onClick={() => setSidebarOpen(false)} className="p-2">
-                <XMarkIcon className="h-6 w-6 text-gray-500" />
+              <button onClick={() => setSidebarOpen(false)} className="p-2 text-indigo-200 hover:text-white transition-colors">
+                <XMarkIcon className="h-6 w-6" />
               </button>
             </div>
-            <nav className="p-6 space-y-2">
+            <nav className="relative p-6 space-y-2">
               {navigation.map((item) => (
                 <button
                   key={item.name}
@@ -1184,10 +1346,16 @@ export default function InstructorCourses() {
                     router.push(item.href);
                     setSidebarOpen(false);
                   }}
-                  className={`flex items-center w-full p-3 rounded-lg transition-colors ${item.current ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"}`}
+                  className={`flex items-center w-full p-3 rounded-xl transition-all duration-200 group ${
+                    item.current 
+                      ? "bg-indigo-600/40 text-white shadow-inner border border-indigo-500/30" 
+                      : "text-indigo-200 hover:bg-white/5 hover:text-white hover:-translate-y-0.5"
+                  }`}
                 >
-                  <item.icon className="h-5 w-5 mr-3" />
-                  {item.name}
+                  <item.icon className={`h-5 w-5 mr-3 transition-colors ${
+                    item.current ? "text-indigo-300" : "text-indigo-400 group-hover:text-indigo-300"
+                  }`} />
+                  <span className="font-medium">{item.name}</span>
                 </button>
               ))}
             </nav>
@@ -1197,38 +1365,40 @@ export default function InstructorCourses() {
 
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-80 lg:flex-col">
-        <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6 pb-4">
-          <div className="flex h-16 shrink-0 items-center">
-            <h1 className="text-2xl font-bold" style={{ color: '#667eea' }}>
-              LearnAI Hub
-            </h1>
+        <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-gradient-to-b from-indigo-900 to-indigo-950 border-r border-indigo-800/50 px-6 pb-4 relative shadow-2xl">
+          <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5 pointer-events-none"></div>
+          
+          <div className="flex h-20 shrink-0 items-center relative z-10 border-b border-indigo-800/50 mb-2">
+            <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-purple-400 tracking-tight drop-shadow-sm">LearnAI Hub</h1>
           </div>
-          <nav className="flex flex-1 flex-col">
+          
+          <nav className="flex flex-1 flex-col relative z-10">
             <ul className="flex flex-1 flex-col gap-y-7">
               <li>
-                <ul className="-mx-2 space-y-1">
+                <ul className="-mx-2 space-y-2">
                   {navigation.map((item) => (
                     <li key={item.name}>
                       <button 
                         onClick={() => router.push(item.href)} 
-                        className={`flex items-center w-full p-3 rounded-lg transition-colors group ${item.current ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"}`}
+                        className={`flex items-center w-full p-3.5 rounded-2xl transition-all duration-300 group font-semibold ${item.current ? "bg-indigo-600/40 text-white shadow-inner border border-indigo-500/30" : "text-indigo-200 hover:bg-indigo-800/30 hover:text-white hover:-translate-y-0.5"}`}
                       >
-                        <item.icon className={`h-5 w-5 mr-3 ${item.current ? "text-blue-600" : "text-gray-400 group-hover:text-blue-600"}`} />
+                        <item.icon className={`h-6 w-6 mr-3 transition-colors duration-300 ${item.current ? "text-indigo-300" : "text-indigo-500 group-hover:text-indigo-300"}`} />
                         {item.name}
                       </button>
                     </li>
                   ))}
                 </ul>
               </li>
-              <li className="mt-auto">
-                <div className="p-3 text-sm text-gray-600 border-t border-gray-200">
-                  <div className="font-medium text-gray-900">Instructor</div>
+              <li className="mt-auto space-y-3">
+                <div className="p-4 rounded-2xl bg-indigo-900/50 border border-indigo-800/50 backdrop-blur-sm shadow-inner">
+                  <div className="text-xs text-indigo-400 font-bold uppercase tracking-widest mb-1">Instructor</div>
+                  <div className="font-extrabold text-indigo-50 truncate text-sm">{userName}</div>
                 </div>
                 <button 
                   onClick={handleLogout} 
-                  className="flex items-center w-full p-3 text-red-600 rounded-lg hover:bg-red-50 transition-colors group mt-2"
+                  className="flex items-center justify-center w-full p-3.5 text-red-300 font-bold bg-red-950/30 border border-red-900/50 rounded-2xl hover:bg-red-600 hover:text-white hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300 group"
                 >
-                  <XMarkIcon className="h-5 w-5 mr-3 text-red-400" />
+                  <XMarkIcon className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform" />
                   Logout
                 </button>
               </li>
@@ -1240,15 +1410,29 @@ export default function InstructorCourses() {
       {/* Main content */}
       <div className="lg:pl-80">
         {/* Top bar */}
-        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
-          <button type="button" className="-m-2.5 p-2.5 text-gray-700 lg:hidden" onClick={() => setSidebarOpen(true)}>
+        <div className="sticky top-0 z-40 flex h-20 shrink-0 items-center gap-x-4 border-b border-gray-100 bg-white/80 backdrop-blur-xl px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8 transition-all">
+          <button
+            type="button"
+            className="-m-2.5 p-2.5 text-gray-700 lg:hidden hover:text-indigo-600 transition-colors"
+            onClick={() => setSidebarOpen(true)}
+          >
             <Bars3Icon className="h-6 w-6" />
           </button>
 
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6 justify-end">
-            <div className="flex items-center gap-x-4 lg:gap-x-6">
-              <span className="text-sm text-gray-700">Instructor</span>
-              <button onClick={handleLogout} className="text-sm font-semibold text-red-600 hover:text-red-700">Logout</button>
+            <div className="flex items-center justify-end gap-x-4 lg:gap-x-6">
+              <div className="hidden sm:flex items-center gap-3 bg-indigo-50/50 px-4 py-2 rounded-2xl border border-indigo-100/50">
+                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-sm">
+                  {userName ? userName.charAt(0).toUpperCase() : 'I'}
+                </div>
+                <span className="text-sm font-bold text-gray-700 hidden md:block">{userName}</span>
+              </div>
+              <button 
+                onClick={handleLogout} 
+                className="flex items-center justify-center px-4 py-2.5 text-sm font-bold text-red-600 bg-red-50 hover:bg-red-500 hover:text-white rounded-xl transition-all duration-300 shadow-sm border border-red-100"
+              >
+                Logout
+              </button>
             </div>
           </div>
         </div>
@@ -1270,20 +1454,16 @@ export default function InstructorCourses() {
             )}
 
             {/* Header */}
-            <div 
-              className="rounded-2xl p-8 text-white"
-              style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-              }}
-            >
-              <div className="flex justify-between items-start">
+            <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-blue-600 to-purple-700 rounded-2xl p-8 text-white shadow-lg border border-indigo-500/20">
+              <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] opacity-20" />
+              <div className="relative flex justify-between items-start">
                 <div>
-                  <h1 className="text-3xl font-bold mb-2">My Courses</h1>
-                  <p className="text-blue-100 text-lg">Manage and create courses for your students.</p>
+                  <h1 className="text-3xl font-extrabold mb-2 tracking-tight">My Courses</h1>
+                  <p className="text-indigo-100 text-lg font-medium">Manage and create courses for your students.</p>
                 </div>
                 <button 
                   onClick={handleAddCourse} 
-                  className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors flex items-center"
+                  className="bg-white/90 backdrop-blur-sm text-indigo-600 px-6 py-3 rounded-xl font-bold hover:bg-white hover:scale-105 transition-all duration-300 flex items-center shadow-lg border border-white/20"
                 >
                   <PlusIcon className="h-5 w-5 mr-2" />
                   Create New Course
@@ -1293,22 +1473,22 @@ export default function InstructorCourses() {
 
             {/* Stats Overview */}
             {stats && (
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                 {[
                   { name: "Total Courses", value: stats.totalCourses, icon: BookOpenIcon, color: "blue" },
                   { name: "Published", value: stats.publishedCourses, icon: CheckCircleIcon, color: "green" },
                   { name: "Drafts", value: stats.draftCourses, icon: EyeIcon, color: "gray" },
                   { name: "Pending", value: stats.pendingCourses, icon: ClockIcon, color: "yellow" },
-                  { name: "Total Students", value: stats.totalStudents, icon: UserGroupIcon, color: "purple" },
+                  
                 ].map((item) => (
-                  <div key={item.name} className="bg-white rounded-lg shadow border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                  <div key={item.name} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
                     <div className="flex items-center">
-                      <div className={`p-2 rounded-lg bg-${item.color}-100`}>
+                      <div className={`p-3 rounded-xl bg-${item.color}-50 ring-1 ring-${item.color}-100/50 shadow-inner group-hover:scale-110 transition-transform duration-300`}>
                         <item.icon className={`h-6 w-6 text-${item.color}-600`} />
                       </div>
                       <div className="ml-4">
-                        <p className="text-sm font-medium text-gray-600">{item.name}</p>
-                        <p className="text-2xl font-bold text-gray-900">{item.value.toLocaleString()}</p>
+                        <p className="text-sm font-bold text-gray-500 uppercase tracking-widest">{item.name}</p>
+                        <p className="text-2xl font-extrabold text-gray-900 mt-1">{item.value.toLocaleString()}</p>
                       </div>
                     </div>
                   </div>
@@ -1317,17 +1497,17 @@ export default function InstructorCourses() {
             )}
 
             {/* Filters and Search */}
-            <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all duration-300">
               <div className="flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
                 <div className="flex-1">
-                  <div className="relative">
-                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                  <div className="relative group">
+                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2 group-hover:text-indigo-500 transition-colors" />
                     <input
                       type="text"
                       placeholder="Search courses by title, description, or category..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black placeholder-gray-400 transition-all bg-gray-50/50 focus:bg-white hover:border-gray-300"
                     />
                   </div>
                 </div>
@@ -1335,7 +1515,7 @@ export default function InstructorCourses() {
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value as any)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="border border-gray-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black transition-all bg-gray-50/50 focus:bg-white hover:border-gray-300 cursor-pointer"
                   >
                     <option value="all">All Status</option>
                     <option value="draft">Draft</option>
@@ -1347,35 +1527,58 @@ export default function InstructorCourses() {
               </div>
             </div>
 
-            {/* Courses Table */}
-            <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">My Courses ({filteredCourses.length})</h3>
+            {/* Courses View Wrapper */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                <h3 className="text-lg font-bold text-gray-900 tracking-tight">My Courses <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">{filteredCourses.length}</span></h3>
+                <div className="flex bg-gray-200/50 rounded-xl p-1 gap-1 border border-gray-200">
+                  <button
+                    onClick={() => setViewMode("grid")}
+                    className={`p-2 rounded-lg transition-all duration-300 ${viewMode === "grid" ? "bg-white shadow-sm text-indigo-600 ring-1 ring-gray-200" : "text-gray-500 hover:text-indigo-600 hover:bg-gray-100/50"}`}
+                    title="Grid View"
+                  >
+                    <Squares2X2Icon className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode("table")}
+                    className={`p-2 rounded-lg transition-all duration-300 ${viewMode === "table" ? "bg-white shadow-sm text-indigo-600 ring-1 ring-gray-200" : "text-gray-500 hover:text-indigo-600 hover:bg-gray-100/50"}`}
+                    title="List View"
+                  >
+                    <ListBulletIcon className="h-5 w-5" />
+                  </button>
+                </div>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Materials</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Students</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {currentCourses.length > 0 ? (
-                      currentCourses.map((course) => (
-                        <tr key={course._id} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-6 py-4">
-                            <div className="flex items-center">
-                              <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <BookOpenIcon className="h-5 w-5 text-blue-600" />
-                              </div>
+              <div className="p-0">
+                {currentCourses.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500">
+                    <BookOpenIcon className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+                    <p className="text-lg font-medium text-gray-900">No courses found</p>
+                    <p className="text-sm">Try adjusting your search or filters.</p>
+                  </div>
+                ) : viewMode === "table" ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Materials</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Students</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {currentCourses.map((course) => (
+                          <tr key={course._id} className="hover:bg-indigo-50/50 transition-colors group">
+                            <td className="px-6 py-4">
+                              <div className="flex items-center">
+                                <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                  <BookOpenIcon className="h-5 w-5 text-blue-600" />
+                                </div>
                               <div className="ml-4">
                                 <div className="text-sm font-medium text-gray-900">{course.title}</div>
                                 <div className="text-sm text-gray-500 line-clamp-1">{course.description}</div>
@@ -1439,25 +1642,84 @@ export default function InstructorCourses() {
                             </div>
                           </td>
                         </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
-                          <BookOpenIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                          <p className="text-lg font-medium">No courses found</p>
-                          <p className="mt-1">Try adjusting your search or create your first course</p>
-                          <button 
-                            onClick={handleAddCourse}
-                            className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                          >
-                            Create Your First Course
-                          </button>
-                        </td>
-                      </tr>
-                    )}
+                      ))}
                   </tbody>
                 </table>
               </div>
+            ) : (
+              <div className="p-6 bg-gray-50">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {currentCourses.map((course) => (
+                    <div key={course._id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group">
+                      <div className="p-5 flex-grow">
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <BookOpenIcon className="h-6 w-6 text-blue-600" />
+                          </div>
+                          <span className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full ${getStatusColor(course.status)}`}>
+                            {getStatusIcon(course.status)}
+                            <span className="ml-1">{course.status.charAt(0).toUpperCase() + course.status.slice(1)}</span>
+                          </span>
+                        </div>
+                        
+                        <h4 className="text-lg font-bold text-gray-900 mb-1 line-clamp-1" title={course.title}>
+                          {course.title}
+                        </h4>
+                        <p className="text-sm text-gray-500 mb-3 line-clamp-2 min-h-[40px]">
+                          {course.description}
+                        </p>
+                        
+                        <div className="space-y-2 mb-4">
+                          <div className="flex items-center text-sm text-gray-600">
+                            <span className="text-gray-400 w-20">Category:</span>
+                            <span className="truncate">{course.category}</span>
+                          </div>
+                          <div className="flex items-center text-sm text-gray-600">
+                            <span className="text-gray-400 w-20">Students:</span>
+                            <span className="font-medium flex items-center">
+                              <UserGroupIcon className="h-4 w-4 mr-1 text-gray-400" />
+                              {course.studentsEnrolled.toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="flex items-center text-sm text-gray-600">
+                            <span className="text-gray-400 w-20">Materials:</span>
+                            <span>{course.materials?.length || 0} items</span>
+                          </div>
+                          <div className="flex items-center text-sm text-gray-600">
+                            <span className="text-gray-400 w-20">Updated:</span>
+                            <span>{formatDate(course.updatedAt)}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="px-5 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center gap-2">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getLevelColor(course.level)}`}>
+                          {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
+                        </span>
+                        
+                        <div className="flex space-x-1">
+                          <button 
+                            onClick={() => handleEditCourse(course)} 
+                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" 
+                            title="Edit Course"
+                          >
+                            <PencilIcon className="h-5 w-5" />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteCourse(course._id, course.title)} 
+                            className="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors" 
+                            title="Delete Course"
+                          >
+                            <TrashIcon className="h-5 w-5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            </div>
 
               {/* Pagination */}
               {totalPages > 1 && (

@@ -17,7 +17,10 @@ export async function POST(request: Request) {
     }
 
     // Find enrollment
-    const enrollment = await Enrollment.findById(enrollmentId);
+    // In your POST function, update the findById line:
+const enrollment = await Enrollment.findById(enrollmentId)
+  .populate('student', 'name email')
+  .populate('course', 'title level category instructor');
     
     if (!enrollment) {
       return NextResponse.json(
@@ -54,11 +57,13 @@ export async function POST(request: Request) {
       ? Math.min(100, Math.round((completedCount / totalMaterials) * 100))
       : 0;
     
-    // Mark course as completed if all materials are done
-    if (totalMaterials > 0 && completedCount >= totalMaterials) {
-      enrollment.completed = true;
-      enrollment.completedAt = new Date();
-    }
+    // DO NOT mark course as completed here!
+    // Course should only be completed after passing the quiz
+    // Remove these lines:
+    // if (totalMaterials > 0 && completedCount >= totalMaterials) {
+    //   enrollment.completed = true;
+    //   enrollment.completedAt = new Date();
+    // }
 
     enrollment.lastAccessed = new Date();
     await enrollment.save();

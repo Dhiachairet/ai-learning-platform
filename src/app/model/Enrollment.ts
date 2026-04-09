@@ -17,8 +17,8 @@ const EnrollmentSchema = new mongoose.Schema({
   },
   progress: { 
     type: Number, 
-    default: 0, 
-    min: 0, 
+    default: 0,
+    min: 0,
     max: 100 
   },
   completed: { 
@@ -32,16 +32,23 @@ const EnrollmentSchema = new mongoose.Schema({
     type: Date, 
     default: Date.now 
   },
-  // Track completed lessons/materials
   completedMaterials: [{
     materialId: { type: String, required: true },
     completedAt: { type: Date, default: Date.now }
-  }]
-}, {
-  timestamps: true
+  }],
+  // Add these fields for quiz tracking
+  quizPassed: { 
+    type: Boolean, 
+    default: false 
+  },
+  quizScore: { 
+    type: Number, 
+    default: 0 
+  }
+  
 });
 
-// Ensure one enrollment per student per course
+// Add index for faster queries
 EnrollmentSchema.index({ student: 1, course: 1 }, { unique: true });
 
 export default mongoose.models.Enrollment || mongoose.model('Enrollment', EnrollmentSchema);

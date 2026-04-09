@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import Course from '../../../../model/Course';
-import User from '@/app/model/User';
+import User from '../../../../model/User';
 import connectDB from '../../../../lib/db';
 
 const getUserIdFromToken = (request: NextRequest): string | null => {
@@ -27,6 +27,9 @@ export async function GET(request: NextRequest) {
   try {
     await connectDB();
     
+    // Ensure User model is registered before querying
+    const _userModel = User;
+
     const instructorId = getUserIdFromToken(request);
     if (!instructorId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -75,6 +78,7 @@ export async function GET(request: NextRequest) {
         status: course.status,
         thumbnail: course.thumbnail,
         materials: course.materials || [],
+        quizzes: course.quizzes || [],
         students: course.students,
         studentsEnrolled: course.students.length,
         createdAt: course.createdAt,
@@ -102,7 +106,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, description, category, level = 'beginner', status = 'draft', thumbnail, materials = [] } = body;
+    const { title, description, category, level = 'beginner', status = 'draft', thumbnail, materials = [], quizzes = [] } = body;
 
     // Validate required fields
     if (!title || !description || !category) {
@@ -120,6 +124,7 @@ export async function POST(request: NextRequest) {
       status,
       thumbnail: thumbnail || '',
       materials: materials,
+      quizzes: quizzes || [],
       instructor: instructorId,
       students: [],
       lessons: []
@@ -138,6 +143,7 @@ export async function POST(request: NextRequest) {
         status: course.status,
         thumbnail: course.thumbnail,
         materials: course.materials,
+        quizzes: course.quizzes,
         instructor: instructorId,
         createdAt: course.createdAt,
         updatedAt: course.updatedAt,
@@ -163,7 +169,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { id, title, description, category, level, status, thumbnail, materials } = body;
+    const { id, title, description, category, level, status, thumbnail, materials , quizzes} = body;
 
     const course = await Course.findOne({ _id: id, instructor: instructorId });
     if (!course) {
@@ -178,6 +184,7 @@ export async function PUT(request: NextRequest) {
     if (status) course.status = status;
     if (thumbnail !== undefined) course.thumbnail = thumbnail;
     if (materials !== undefined) course.materials = materials;
+    if (quizzes !== undefined) course.quizzes = quizzes;
     course.updatedAt = new Date();
 
     await course.save();
@@ -193,6 +200,7 @@ export async function PUT(request: NextRequest) {
         status: course.status,
         thumbnail: course.thumbnail,
         materials: course.materials,
+        quizzes: course.quizzes,
         updatedAt: course.updatedAt,
       }
     });

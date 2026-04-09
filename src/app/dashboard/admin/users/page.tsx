@@ -242,6 +242,7 @@ const DeleteModal = ({
 export default function UserManagement() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [userName, setUserName] = useState("Admin");
   const [users, setUsers] = useState<User[]>([]);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -280,7 +281,7 @@ export default function UserManagement() {
     { name: "Dashboard", href: "/dashboard/admin", icon: ChartBarIcon, current: false },
     { name: "User Management", href: "/dashboard/admin/users", icon: UsersIcon, current: true },
     { name: "Course Management", href: "/dashboard/admin/courses", icon: BookOpenIcon, current: false },
-    { name: "System Settings", href: "/dashboard/admin/settings", icon: CogIcon, current: false },
+    
   ];
 
   // Fetch users data
@@ -372,6 +373,9 @@ export default function UserManagement() {
         }
 
         const payload = JSON.parse(atob(token.split(".")[1]));
+        if (payload.name) {
+          setUserName(payload.name);
+        }
         if (payload.role !== "admin") {
           router.push("/");
           return;
@@ -655,28 +659,56 @@ export default function UserManagement() {
 
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-80 lg:flex-col">
-        <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6 pb-4">
-          <div className="flex h-16 shrink-0 items-center">
-            <h1 className="text-2xl font-bold text-blue-600">LearnAI Hub - Admin</h1>
+        <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-gradient-to-b from-indigo-900 to-indigo-950 border-r border-indigo-800/50 shadow-2xl relative px-6 pb-4">
+          {/* Subtle Grid Overlay */}
+          <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5 pointer-events-none"></div>
+
+          <div className="flex h-16 shrink-0 items-center relative z-10">
+            <h1 className="text-2xl font-bold text-white tracking-tight">LearnAI Hub</h1>
+            <span className="ml-2 px-2 py-0.5 rounded-full bg-indigo-500/30 text-indigo-200 text-xs font-medium border border-indigo-400/20">
+              Admin
+            </span>
           </div>
-          <nav className="flex flex-1 flex-col">
+          <nav className="flex flex-1 flex-col relative z-10">
             <ul className="flex flex-1 flex-col gap-y-7">
               <li>
-                <ul className="-mx-2 space-y-1">
+                <ul className="-mx-2 space-y-2">
                   {navigation.map((item) => (
                     <li key={item.name}>
-                      <button onClick={() => router.push(item.href)} className={`flex items-center w-full p-3 rounded-lg transition-colors group ${item.current ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"}`}>
-                        <item.icon className={`h-5 w-5 mr-3 ${item.current ? "text-blue-600" : "text-gray-400 group-hover:text-blue-600"}`} />
+                      <button
+                        onClick={() => router.push(item.href)}
+                        className={`flex items-center w-full p-3 rounded-xl transition-all duration-300 group ${
+                          item.current 
+                            ? 'bg-indigo-600/40 text-white shadow-inner border border-indigo-500/30' 
+                            : 'text-indigo-200 hover:bg-indigo-800/30 hover:text-white hover:-translate-y-0.5'
+                        }`}
+                      >
+                        <item.icon className="h-5 w-5 mr-3 text-indigo-400 group-hover:text-indigo-300" />
                         {item.name}
                       </button>
                     </li>
                   ))}
                 </ul>
               </li>
-              <li className="mt-auto">
-                <button onClick={handleLogout} className="flex items-center w-full p-3 text-red-600 rounded-lg hover:bg-red-50 transition-colors group">
-                  <ShieldCheckIcon className="h-5 w-5 mr-3 text-red-400" />
-                  Logout
+              
+              <li className="mt-auto space-y-4">
+                {/* User Profile Widget */}
+                <div className="p-4 bg-indigo-900/50 border border-indigo-800/50 rounded-2xl backdrop-blur-sm flex items-center gap-3 shadow-inner">
+                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-lg ring-2 ring-indigo-400/20">
+                    {userName.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-white truncate">{userName}</p>
+                    <p className="text-xs text-indigo-300 truncate">Administrator</p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center justify-center w-full p-3 text-red-50 bg-red-950/30 border border-red-900/50 rounded-xl hover:bg-red-600 hover:border-red-500 transition-all duration-300 group shadow-sm hover:shadow-red-600/20"
+                >
+                  <ShieldCheckIcon className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform" />
+                  <span className="font-semibold tracking-wide">Logout</span>
                 </button>
               </li>
             </ul>
@@ -687,15 +719,28 @@ export default function UserManagement() {
       {/* Main content */}
       <div className="lg:pl-80">
         {/* Top bar */}
-        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
-          <button type="button" className="-m-2.5 p-2.5 text-gray-700 lg:hidden" onClick={() => setSidebarOpen(true)}>
-            <Bars3Icon className="h-6 w-6" />
+        <div className="sticky top-0 z-40 flex h-20 shrink-0 items-center gap-x-4 border-b border-gray-100 bg-white/80 backdrop-blur-xl px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8 transition-all duration-300">
+          <button type="button" className="-m-2.5 p-2.5 text-gray-700 lg:hidden hover:bg-gray-50 rounded-lg transition-colors" onClick={() => setSidebarOpen(true)}>
+            <span className="sr-only">Open sidebar</span>
+            <Bars3Icon className="h-6 w-6" aria-hidden="true" />
           </button>
 
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6 justify-end">
-            <div className="flex items-center gap-x-4 lg:gap-x-6">
-              <span className="text-sm text-gray-700">Admin</span>
-              <button onClick={handleLogout} className="text-sm font-semibold text-red-600 hover:text-red-700">Logout</button>
+            <div className="flex items-center gap-x-6">
+              {/* Profile Dropdown Area */}
+              <div className="flex items-center gap-x-4 bg-indigo-50/50 py-1.5 px-2.5 rounded-2xl border border-indigo-100/50">
+                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-sm ring-2 ring-white">
+                  {userName.charAt(0).toUpperCase()}
+                </div>
+                <span className="text-sm font-semibold text-indigo-950 pr-2">{userName}</span>
+              </div>
+              
+              <button 
+                onClick={handleLogout}
+                className="text-sm font-semibold text-red-600 bg-red-50 border border-red-100 px-4 py-2 rounded-xl hover:bg-red-500 hover:text-white transition-all duration-300 shadow-sm hover:shadow-red-500/20"
+              >
+                Logout
+              </button>
             </div>
           </div>
         </div>
@@ -717,13 +762,14 @@ export default function UserManagement() {
             )}
 
             {/* Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-purple-700 rounded-2xl p-8 text-white">
-              <div className="flex justify-between items-start">
+            <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-blue-600 to-purple-700 rounded-2xl p-8 text-white shadow-lg border border-indigo-500/20">
+              <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] opacity-20" />
+              <div className="relative flex justify-between items-start">
                 <div>
-                  <h1 className="text-3xl font-bold mb-2">User Management</h1>
-                  <p className="text-blue-100 text-lg">Manage all platform users, their roles and permissions.</p>
+                  <h1 className="text-3xl font-extrabold mb-2 tracking-tight">User Management</h1>
+                  <p className="text-indigo-100 text-lg font-medium">Manage all platform users, their roles and permissions.</p>
                 </div>
-                <button onClick={handleAddUser} className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors flex items-center">
+                <button onClick={handleAddUser} className="bg-white/90 backdrop-blur-sm text-indigo-600 px-6 py-3 rounded-xl font-bold hover:bg-white hover:scale-105 transition-all duration-300 flex items-center shadow-lg border border-white/20">
                   <PlusIcon className="h-5 w-5 mr-2" />
                   Add New User
                 </button>
@@ -739,14 +785,14 @@ export default function UserManagement() {
                   { name: "Instructors", value: stats.instructors, icon: UsersIcon, color: "purple" },
                   { name: "Admins", value: stats.admins, icon: ShieldCheckIcon, color: "red" },
                 ].map((item) => (
-                  <div key={item.name} className="bg-white rounded-lg shadow border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                  <div key={item.name} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
                     <div className="flex items-center">
-                      <div className={`p-2 rounded-lg bg-${item.color}-100`}>
+                      <div className={`p-3 rounded-xl bg-${item.color}-50 ring-1 ring-${item.color}-100/50 shadow-inner group-hover:scale-110 transition-transform duration-300`}>
                         <item.icon className={`h-6 w-6 text-${item.color}-600`} />
                       </div>
                       <div className="ml-4">
-                        <p className="text-sm font-medium text-gray-600">{item.name}</p>
-                        <p className="text-2xl font-bold text-gray-900">{item.value.toLocaleString()}</p>
+                        <p className="text-sm font-bold text-gray-500 uppercase tracking-widest">{item.name}</p>
+                        <p className="text-2xl font-extrabold text-gray-900 mt-1">{item.value.toLocaleString()}</p>
                       </div>
                     </div>
                   </div>
@@ -755,17 +801,17 @@ export default function UserManagement() {
             )}
 
             {/* Filters and Search */}
-<div className="bg-white rounded-lg shadow border border-gray-200 p-6">
+<div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all duration-300">
   <div className="flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
     <div className="flex-1">
-      <div className="relative">
-        <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+      <div className="relative group">
+        <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2 group-hover:text-indigo-500 transition-colors" />
         <input
           type="text"
           placeholder="Search users by name or email..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black placeholder-gray-500"
+          className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black placeholder-gray-400 transition-all bg-gray-50/50 focus:bg-white hover:border-gray-300"
         />
       </div>
     </div>
@@ -773,7 +819,7 @@ export default function UserManagement() {
       <select
         value={roleFilter}
         onChange={(e) => setRoleFilter(e.target.value as any)}
-        className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+        className="border border-gray-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black transition-all bg-gray-50/50 focus:bg-white hover:border-gray-300 cursor-pointer"
       >
         <option value="all">All Roles</option>
         <option value="student">Students</option>
@@ -786,9 +832,9 @@ export default function UserManagement() {
 
 
             {/* Users Table */}
-            <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">Users ({filteredUsers.length})</h3>
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+                <h3 className="text-lg font-bold text-gray-900 tracking-tight">Users Directory <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">{filteredUsers.length}</span></h3>
               </div>
 
               <div className="overflow-x-auto">
@@ -804,7 +850,7 @@ export default function UserManagement() {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {currentUsers.length > 0 ? (
                       currentUsers.map((user) => (
-                        <tr key={user._id} className="hover:bg-gray-50 transition-colors">
+                        <tr key={user._id} className="hover:bg-indigo-50/50 transition-colors group">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
                               <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">

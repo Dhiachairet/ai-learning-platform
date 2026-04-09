@@ -11,6 +11,8 @@ const userSchema = new mongoose.Schema({
     enum: ['student', 'instructor', 'admin', ''],
     default: ''
   },
+  // In your User schema, add:
+  chatSessions: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Chat' }],
   educationLevel: { type: String },
   expertiseArea: { type: [String], default: [] },
    enrolledCourses: [{

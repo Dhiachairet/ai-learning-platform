@@ -57,13 +57,13 @@ export default function Navbar() {
     <nav className="bg-white/80 backdrop-blur-md shadow-lg fixed w-full z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <BookOpenIcon className="h-8 w-8 text-indigo-600 mr-2" />
-            <span className="text-xl font-bold text-gray-800">LearnAI Hub</span>
-          </div>
+          <a href="/" className="flex items-center group cursor-pointer">
+            <BookOpenIcon className="h-8 w-8 text-indigo-600 mr-2 group-hover:scale-110 transition-transform duration-300" />
+            <span className="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-800 to-purple-600 tracking-tight">LearnAI Hub</span>
+          </a>
           <div className="hidden md:flex items-center space-x-8">
-            <a href="/courses" className="text-gray-700 hover:text-indigo-600">Courses</a>
-            <a href="#" className="text-gray-700 hover:text-indigo-600">About</a>
+            <a href="/courses" className="text-gray-700 hover:text-indigo-600 font-medium transition-colors">Courses</a>
+            <a href="#about" className="text-gray-700 hover:text-indigo-600 font-medium transition-colors">About</a>
             {user ? (
               <div className="flex items-center space-x-4">
                 <span className="text-gray-700">Hello, {user.name}</span>

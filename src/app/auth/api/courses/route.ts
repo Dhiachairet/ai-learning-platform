@@ -9,7 +9,7 @@ export async function GET() {
     // Get only approved courses and populate instructor data
     const courses = await Course.find({ status: 'approved' })
       .populate('instructor', 'name email')
-      .select('title description category level thumbnail studentsEnrolled instructor createdAt updatedAt')
+      .select('title description category level thumbnail studentsEnrolled instructor materials quizzes createdAt updatedAt')
       .sort({ createdAt: -1 });
        
     return NextResponse.json({ 

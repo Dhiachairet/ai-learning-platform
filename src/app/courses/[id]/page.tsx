@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import CertificateViewer from '../../components/Certificate';
 import Image from 'next/image';
 import {
   PlayIcon,
@@ -17,6 +18,8 @@ import {
   AcademicCapIcon,
   ChevronDownIcon,
   ChevronUpIcon,
+  XMarkIcon,
+  ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 import Navbar from '../../components/Navbar';
 
@@ -35,7 +38,7 @@ interface Course {
   category: string;
   level: 'beginner' | 'intermediate' | 'advanced';
   status: "draft" | "pending" | "approved" | "rejected" | "reported";
-  studentsEnrolled: number;
+  
   createdAt: string;
   updatedAt: string;
   thumbnail?: string;
@@ -45,6 +48,7 @@ interface Course {
     name: string;
     email: string;
   };
+  quizzes?: QuizQuestion[];
 }
 
 interface Enrollment {
@@ -67,6 +71,28 @@ interface CurrentUser {
   name: string;
   email: string;
   role: string;
+}
+
+interface QuizQuestion {
+  _id?: string;
+  question: string;
+  options: string[];
+  correctAnswer: number;
+}
+
+interface QuizAttempt {
+  _id?: string;
+  studentId: string;
+  courseId: string;
+  answers: {
+    questionIndex: number;
+    selectedAnswer: number;
+    isCorrect: boolean;
+  }[];
+  score: number;
+  totalQuestions: number;
+  passed: boolean;
+  completedAt: string;
 }
 
 // YouTube Embed Component
@@ -118,8 +144,30 @@ export default function CourseDetails() {
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [completingMaterial, setCompletingMaterial] = useState<string | null>(null);
-  const [showQuizButton, setShowQuizButton] = useState(false);
   const [expandedYouTube, setExpandedYouTube] = useState<string | null>(null);
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
+  const [quizScore, setQuizScore] = useState<number | null>(null);
+  const [isQuizLoading, setIsQuizLoading] = useState(false);
+  const [quizAttempt, setQuizAttempt] = useState<QuizAttempt | null>(null);
+  const [showQuizResults, setShowQuizResults] = useState(false);
+  const [reviewingAnswers, setReviewingAnswers] = useState(false);
+  const [hasPassedQuiz, setHasPassedQuiz] = useState<boolean>(false);
+  const [quizAttempts, setQuizAttempts] = useState<QuizAttempt[]>([]);
+  const [showCertificate, setShowCertificate] = useState(false);
+  const [certificateData, setCertificateData] = useState<any>(null);
+
+  // Calculate derived states
+  const quizCompleted = quizAttempts.length > 0;
+  const latestQuizAttempt = quizAttempts[0];
+  const showQuizButton = isEnrolled && 
+                        enrollment && 
+                        course?.materials && 
+                        enrollment.completedMaterials?.length === course.materials.length && 
+                        course.materials.length > 0 && 
+                        !enrollment.completed;
 
   // Get current user from localStorage
   useEffect(() => {
@@ -156,7 +204,12 @@ export default function CourseDetails() {
         }
         
         const data = await response.json();
+        
         setCourse(data.course);
+
+        if (data.course.quizzes) {
+          setQuizQuestions(data.course.quizzes);
+        }
       } catch (error) {
         console.error('Error fetching course:', error);
       } finally {
@@ -168,38 +221,106 @@ export default function CourseDetails() {
       fetchCourse();
     }
   }, [params.id]);
-
-  useEffect(() => {
-    const checkEnrollmentStatus = async () => {
-      if (!course || !currentUser) return;
+const fetchCertificate = async () => {
+  if (!enrollment || !currentUser || !course) return;
+  
+  try {
+    // First try to get existing certificate
+    const response = await fetch(`/api/certificate?enrollmentId=${enrollment._id}`);
+    
+    if (response.ok) {
+      const data = await response.json();
       
-      try {
-        const response = await fetch(`/auth/api/enroll/check?courseId=${course._id}&studentId=${currentUser.id}`);
-        const data = await response.json();
-        
-        setIsEnrolled(data.isEnrolled);
-        setEnrollment(data.enrollment);
-      } catch (error) {
-        console.error('Error checking enrollment:', error);
-      }
-    };
-
-    checkEnrollmentStatus();
-  }, [course, currentUser]);
-
-  // Check if all materials are completed to show quiz button
-  useEffect(() => {
-    if (isEnrolled && enrollment && course?.materials) {
-      const completedCount = enrollment.completedMaterials?.length || 0;
-      const totalMaterials = course.materials.length;
-      
-      if (completedCount === totalMaterials && totalMaterials > 0) {
-        setShowQuizButton(true);
-      } else {
-        setShowQuizButton(false);
+      if (data.certificates && data.certificates.length > 0) {
+        setCertificateData(data.certificates[0]);
+        setShowCertificate(true);
+        return;
       }
     }
-  }, [isEnrolled, enrollment, course?.materials]);
+    
+    // If no certificate exists, generate one
+    const generateResponse = await fetch('/api/certificate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        enrollmentId: enrollment._id,
+        studentId: currentUser.id,
+        courseId: course._id
+      }),
+    });
+    
+    if (generateResponse.ok) {
+      const generateData = await generateResponse.json();
+      setCertificateData(generateData.certificate);
+      setShowCertificate(true);
+    } else {
+      // If API fails, use mock data with real user info
+      const mockCertificate = {
+        _id: Date.now().toString(),
+        certificateId: `CERT-${Date.now().toString().slice(-8)}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
+        studentName: currentUser.name,
+        courseName: course.title,
+        instructorName: course.instructor.name,
+        issueDate: new Date().toISOString(),
+        completionDate: enrollment.completedAt || new Date().toISOString(),
+        metadata: {
+          level: course.level,
+          category: course.category,
+          
+        }
+      };
+      
+      setCertificateData(mockCertificate);
+      setShowCertificate(true);
+    }
+    
+  } catch (error) {
+    console.error('Error fetching certificate:', error);
+    // Fallback to mock data with real info
+    const mockCertificate = {
+      _id: Date.now().toString(),
+      certificateId: `CERT-${Date.now().toString().slice(-8)}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
+      studentName: currentUser.name,
+      courseName: course.title,
+      instructorName: course.instructor.name,
+      issueDate: new Date().toISOString(),
+      completionDate: enrollment.completedAt || new Date().toISOString(),
+      metadata: {
+        level: course.level,
+        category: course.category,
+       
+      }
+    };
+    
+    setCertificateData(mockCertificate);
+    setShowCertificate(true);
+  }
+};
+  const checkEnrollmentStatus = async () => {
+    if (!course || !currentUser) return;
+    
+    try {
+      const response = await fetch(`/auth/api/enroll/check?courseId=${course._id}&studentId=${currentUser.id}`);
+      const data = await response.json();
+      
+      setIsEnrolled(data.isEnrolled);
+      setEnrollment(data.enrollment);
+      setQuizAttempts(data.quizAttempts || []);
+      
+      if (data.quizAttempts && data.quizAttempts.length > 0) {
+        const latest = data.quizAttempts[0];
+        setHasPassedQuiz(latest.passed);
+      }
+    } catch (error) {
+      console.error('Error checking enrollment:', error);
+    }
+  };
+
+  useEffect(() => {
+    checkEnrollmentStatus();
+  }, [course, currentUser]);
 
   const handleEnroll = async () => {
     try {
@@ -247,7 +368,6 @@ export default function CourseDetails() {
     try {
       setCompletingMaterial(material.title);
 
-      // Call API to mark material as completed
       const response = await fetch('/auth/api/enroll/complete-material', {
         method: 'POST',
         headers: {
@@ -266,7 +386,6 @@ export default function CourseDetails() {
         throw new Error(data.error || 'Failed to mark as done');
       }
 
-      // Update enrollment state
       setEnrollment(data.enrollment);
       
     } catch (error) {
@@ -315,7 +434,422 @@ export default function CourseDetails() {
   };
 
   const handleTakeQuiz = () => {
-    alert('Quiz functionality will be implemented soon!');
+    if (!quizQuestions || quizQuestions.length === 0) {
+      alert('No quiz questions available for this course.');
+      return;
+    }
+    
+    setSelectedAnswers([]);
+    setCurrentQuestionIndex(0);
+    setQuizScore(null);
+    setQuizAttempt(null);
+    setShowQuizResults(false);
+    setReviewingAnswers(false);
+    setShowQuiz(true);
+  };
+
+  const QuizComponent = () => {
+    const currentQuestion = quizQuestions[currentQuestionIndex];
+    const totalQuestions = quizQuestions.length;
+
+    if (reviewingAnswers && quizAttempt) {
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Quiz Review</h2>
+                  <p className="text-gray-600">Your answers and results</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setReviewingAnswers(false);
+                    setShowQuizResults(true);
+                  }}
+                  className="p-2 hover:bg-gray-100 rounded-full transition"
+                >
+                  <XMarkIcon className="h-6 w-6 text-gray-500" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {quizQuestions.map((question, index) => {
+                const userAnswer = selectedAnswers[index];
+                const isCorrect = userAnswer === question.correctAnswer;
+                
+                return (
+                  <div key={index} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-start mb-3">
+                      <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
+                        isCorrect ? 'bg-green-100' : 'bg-red-100'
+                      }`}>
+                        <span className={`text-sm font-semibold ${
+                          isCorrect ? 'text-green-800' : 'text-red-800'
+                        }`}>
+                          {index + 1}
+                        </span>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-medium text-gray-900 mb-2">{question.question}</h3>
+                        <div className="space-y-2">
+                          {question.options.map((option, optIndex) => (
+                            <div
+                              key={optIndex}
+                              className={`p-2 rounded ${
+                                optIndex === question.correctAnswer
+                                  ? 'bg-green-50 border border-green-200'
+                                  : optIndex === userAnswer && !isCorrect
+                                  ? 'bg-red-50 border border-red-200'
+                                  : 'bg-gray-50 border border-gray-200'
+                              }`}
+                            >
+                              <div className="flex items-center">
+                                <div className={`w-3 h-3 rounded-full mr-2 ${
+                                  optIndex === question.correctAnswer
+                                    ? 'bg-green-500'
+                                    : optIndex === userAnswer && !isCorrect
+                                    ? 'bg-red-500'
+                                    : 'bg-gray-300'
+                                }`} />
+                                <span className="text-gray-800">{option}</span>
+                                {optIndex === question.correctAnswer && (
+                                  <span className="ml-2 text-xs font-medium text-green-600">✓ Correct Answer</span>
+                                )}
+                                {optIndex === userAnswer && !isCorrect && (
+                                  <span className="ml-2 text-xs font-medium text-red-600">✗ Your Answer</span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    const handleAnswerSelect = (optionIndex: number) => {
+      if (reviewingAnswers) return;
+      const newAnswers = [...selectedAnswers];
+      newAnswers[currentQuestionIndex] = optionIndex;
+      setSelectedAnswers(newAnswers);
+    };
+
+    const handleNextQuestion = () => {
+      if (currentQuestionIndex < totalQuestions - 1) {
+        setCurrentQuestionIndex(currentQuestionIndex + 1);
+      } else {
+        submitQuiz();
+      }
+    };
+
+    const handlePreviousQuestion = () => {
+      if (currentQuestionIndex > 0) {
+        setCurrentQuestionIndex(currentQuestionIndex - 1);
+      }
+    };
+
+    const submitQuiz = async () => {
+      if (!currentUser || !course) return;
+
+      try {
+        setIsQuizLoading(true);
+        
+        let score = 0;
+        const answers = quizQuestions.map((question, index) => {
+          const isCorrect = question.correctAnswer === selectedAnswers[index];
+          if (isCorrect) score++;
+          return {
+            questionIndex: index,
+            selectedAnswer: selectedAnswers[index] || -1,
+            isCorrect
+          };
+        });
+
+        const passed = score >= Math.ceil(totalQuestions * 0.7);
+
+        const quizData = {
+          studentId: currentUser.id,
+          courseId: course._id,
+          answers: answers,
+          score: score,
+          totalQuestions: totalQuestions,
+          passed: passed,
+          completedAt: new Date().toISOString()
+        };
+
+        const response = await fetch('/auth/api/quiz/attempt', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(quizData),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to submit quiz');
+        }
+
+        setQuizAttempt(data.quizAttempt);
+        setQuizScore(score);
+        setShowQuizResults(true);
+        
+        // Add the new quiz attempt to the list
+        setQuizAttempts(prev => [data.quizAttempt, ...prev]);
+        setHasPassedQuiz(passed);
+        
+        // If passed, mark course as completed
+        if (passed && enrollment) {
+          try {
+            const updateResponse = await fetch('/auth/api/enroll/complete', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                enrollmentId: enrollment._id,
+                courseId: course._id
+              }),
+            });
+
+            const updateData = await updateResponse.json();
+            if (updateResponse.ok && updateData.enrollment) {
+              setEnrollment(updateData.enrollment);
+            }
+          } catch (updateError) {
+            console.error('Error updating enrollment:', updateError);
+          }
+        }
+      } catch (error) {
+        console.error('Quiz submission error:', error);
+        alert('Failed to submit quiz. Please try again.');
+      } finally {
+        setIsQuizLoading(false);
+      }
+    };
+
+    const resetQuiz = () => {
+      setSelectedAnswers([]);
+      setCurrentQuestionIndex(0);
+      setQuizScore(null);
+      setQuizAttempt(null);
+      setShowQuizResults(false);
+      setShowQuiz(false);
+      setReviewingAnswers(false);
+    };
+
+    if (showQuizResults && quizAttempt) {
+      const hasPassed = quizAttempt.passed;
+      
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-8">
+              <div className="text-center mb-8">
+                <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-4 ${
+                  hasPassed ? 'bg-green-100' : 'bg-red-100'
+                }`}>
+                  {hasPassed ? (
+                    <CheckCircleIcon className="h-10 w-10 text-green-600" />
+                  ) : (
+                    <ExclamationTriangleIcon className="h-10 w-10 text-red-600" />
+                  )}
+                </div>
+                
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  {hasPassed ? 'Congratulations!' : 'Quiz Complete'}
+                </h2>
+                <p className="text-gray-600 mb-6">
+                  {hasPassed 
+                    ? `You passed the quiz with a score of ${quizScore}/${totalQuestions}!`
+                    : `Your score is ${quizScore}/${totalQuestions}. You need ${Math.ceil(totalQuestions * 0.7)} to pass.`
+                  }
+                </p>
+
+                {hasPassed && (
+                  <div className="mb-6 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+                    <div className="flex items-center justify-center text-green-700 mb-2">
+                      <CheckCircleIcon className="h-5 w-5 mr-2" />
+                      <span className="font-semibold">Course Completed Successfully!</span>
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      You have successfully completed all requirements for this course.
+                    </p>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-3 gap-4 mb-8">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">{quizScore}</div>
+                    <div className="text-sm text-blue-800">Your Score</div>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="text-2xl font-bold text-gray-600">{totalQuestions}</div>
+                    <div className="text-sm text-gray-800">Total Questions</div>
+                  </div>
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">
+                      {Math.round((quizScore! / totalQuestions) * 100)}%
+                    </div>
+                    <div className="text-sm text-green-800">Percentage</div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setShowQuizResults(false);
+                    setReviewingAnswers(true);
+                  }}
+                  className="w-full mb-4 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-semibold"
+                >
+                  Review Answers
+                </button>
+
+                <div className="flex space-x-4">
+                  <button
+                    onClick={() => {
+                      resetQuiz();
+                      checkEnrollmentStatus(); // Refresh enrollment status
+                    }}
+                    className="flex-1 px-6 py-3 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition font-medium"
+                  >
+                    {hasPassed ? 'Back to Dashboard' : 'Back to Course'}
+                  </button>
+                  {!hasPassed && (
+                    <button
+                      onClick={resetQuiz}
+                      className="flex-1 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium"
+                    >
+                      Retake Quiz
+                    </button>
+                  )}
+                </div>
+
+                {hasPassed && (
+                  <button
+                    onClick={() => alert('Certificate will be available soon!')}
+                    className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition font-semibold"
+                  >
+                    <div className="flex items-center justify-center">
+                      <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Download Certificate
+                    </div>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="sticky top-0 bg-white border-b border-gray-200 p-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Course Quiz</h2>
+                <p className="text-gray-600">Test your knowledge</p>
+              </div>
+              <button
+                onClick={resetQuiz}
+                className="p-2 hover:bg-gray-100 rounded-full transition"
+              >
+                <XMarkIcon className="h-6 w-6 text-gray-500" />
+              </button>
+            </div>
+            
+            <div className="mt-4">
+              <div className="flex justify-between text-sm text-gray-600 mb-2">
+                <span>Question {currentQuestionIndex + 1} of {totalQuestions}</span>
+                <span>{Math.round(((currentQuestionIndex + 1) / totalQuestions) * 100)}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${((currentQuestionIndex + 1) / totalQuestions) * 100}%` }}
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6">
+            <div className="mb-8">
+              <div className="text-sm font-semibold text-indigo-600 mb-2">
+                Question {currentQuestionIndex + 1}
+              </div>
+              <h3 className="text-xl font-bold text-gray-900">
+                {currentQuestion.question}
+              </h3>
+            </div>
+
+            <div className="space-y-3 mb-8">
+              {currentQuestion.options.map((option, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleAnswerSelect(index)}
+                  className={`w-full p-4 text-left rounded-lg border transition-all ${
+                    selectedAnswers[currentQuestionIndex] === index
+                      ? 'border-indigo-500 bg-indigo-50'
+                      : 'border-gray-200 hover:border-indigo-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <div className={`flex-shrink-0 w-6 h-6 rounded-full border flex items-center justify-center mr-3 ${
+                      selectedAnswers[currentQuestionIndex] === index
+                        ? 'border-indigo-500 bg-indigo-500'
+                        : 'border-gray-300'
+                    }`}>
+                      {selectedAnswers[currentQuestionIndex] === index && (
+                        <div className="w-2 h-2 rounded-full bg-white"></div>
+                      )}
+                    </div>
+                    <span className="text-gray-800">{option}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex justify-between">
+              <button
+                onClick={handlePreviousQuestion}
+                disabled={currentQuestionIndex === 0}
+                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                Previous
+              </button>
+              
+              <button
+                onClick={handleNextQuestion}
+                disabled={selectedAnswers[currentQuestionIndex] === undefined}
+                className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition font-semibold"
+              >
+                {currentQuestionIndex === totalQuestions - 1 ? 'Submit Quiz' : 'Next Question'}
+              </button>
+            </div>
+
+            {isQuizLoading && (
+              <div className="mt-4 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+                <p className="text-gray-600 mt-2">Submitting quiz...</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   if (isLoading) {
@@ -352,12 +886,9 @@ export default function CourseDetails() {
 
   return (
     <div className="bg-gray-50 min-h-screen">
-      {/* Navbar */}
       <Navbar />
 
-      {/* Main Content */}
       <main className="pt-20 lg:pt-24">
-        {/* Back Button */}
         <div className="container mx-auto px-4 py-6">
           <button
             onClick={() => router.push('/courses')}
@@ -368,14 +899,11 @@ export default function CourseDetails() {
           </button>
         </div>
 
-        {/* Course Header */}
         <section className="container mx-auto px-4">
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 p-8">
-              {/* Course Image and Basic Info */}
               <div className="lg:col-span-2">
                 <div className="flex flex-col lg:flex-row gap-6">
-                  {/* Course Thumbnail */}
                   <div className="flex-shrink-0">
                     {course.thumbnail ? (
                       <Image
@@ -392,7 +920,6 @@ export default function CourseDetails() {
                     )}
                   </div>
 
-                  {/* Course Info */}
                   <div className="flex-1">
                     <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getLevelColor(course.level)} mb-4`}>
                       {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
@@ -402,10 +929,7 @@ export default function CourseDetails() {
                     <p className="text-gray-600 mb-6 leading-relaxed">{course.description}</p>
 
                     <div className="flex items-center space-x-6 text-sm text-gray-600">
-                      <div className="flex items-center">
-                        <UserGroupIcon className="h-5 w-5 mr-2 text-gray-400" />
-                        <span>{course.studentsEnrolled} students enrolled</span>
-                      </div>
+                      
                       <div className="flex items-center">
                         <ClockIcon className="h-5 w-5 mr-2 text-gray-400" />
                         <span>Self-paced</span>
@@ -416,7 +940,6 @@ export default function CourseDetails() {
                       </div>
                     </div>
 
-                    {/* Instructor Info */}
                     <div className="mt-6 p-4 bg-gray-50 rounded-lg">
                       <h3 className="font-semibold text-gray-800 mb-2">Instructor</h3>
                       <div className="flex items-center">
@@ -436,7 +959,6 @@ export default function CourseDetails() {
                 </div>
               </div>
 
-              {/* Enrollment Card */}
               <div className="lg:col-span-1">
                 <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 sticky top-24">
                   <div className="text-center mb-6">
@@ -469,6 +991,14 @@ export default function CourseDetails() {
                           Enroll Now
                         </>
                       )}
+                    </button>
+                  ) : enrollment?.completed ? (
+                    <button
+                      onClick={() => router.push('/dashboard/student/mycourses')}
+                      className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition flex items-center justify-center font-semibold"
+                    >
+                      <CheckCircleIcon className="h-5 w-5 mr-2" />
+                      Course Completed ✓
                     </button>
                   ) : (
                     <button
@@ -509,18 +1039,40 @@ export default function CourseDetails() {
                           <span>{enrollment.progress || 0}% completed</span>
                           <span>{enrollment.completedMaterials?.length || 0}/{course.materials?.length || 0} materials</span>
                         </div>
+                        
+                        {quizCompleted && latestQuizAttempt && (
+                          <div className="mt-2 p-2 rounded bg-green-50 border border-green-200">
+                            <div className="flex items-center text-green-800">
+                              <CheckCircleIcon className="h-4 w-4 mr-1" />
+                              <span className="text-xs font-medium">
+                                Quiz: {latestQuizAttempt.passed ? 'Passed' : 'Failed'} ({latestQuizAttempt.score}/{quizQuestions.length})
+                              </span>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
 
-                  {/* Quiz Button (only shown when all materials completed) */}
-                  {showQuizButton && (
+                  {showQuizButton && !enrollment?.completed && (
                     <button
                       onClick={handleTakeQuiz}
                       className="w-full mt-4 bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition flex items-center justify-center font-semibold"
                     >
                       <AcademicCapIcon className="h-5 w-5 mr-2" />
-                      Take Quiz
+                      {quizCompleted ? 'Retake Quiz' : 'Take Quiz'} ({quizQuestions.length} Questions)
+                    </button>
+                  )}
+
+                  {enrollment?.completed && (
+                    <button
+                      onClick={fetchCertificate}
+                      className="w-full mt-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg hover:from-blue-600 hover:to-purple-700 transition flex items-center justify-center font-semibold"
+                    >
+                      <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      View Certificate
                     </button>
                   )}
                 </div>
@@ -529,7 +1081,6 @@ export default function CourseDetails() {
           </div>
         </section>
 
-        {/* Course Materials - Only show if enrolled */}
         {isEnrolled ? (
           <section className="container mx-auto px-4 py-12">
             <div className="bg-white rounded-xl shadow-lg p-8">
@@ -646,7 +1197,6 @@ export default function CourseDetails() {
                           </div>
                         </div>
                         
-                        {/* YouTube Video Embedded (only for YouTube materials) */}
                         {material.type === 'youtube' && isYouTubeExpanded && (
                           <div className="mt-4 pt-4 border-t border-gray-200">
                             <YouTubeEmbed url={material.url} title={material.title} />
@@ -666,7 +1216,6 @@ export default function CourseDetails() {
             </div>
           </section>
         ) : (
-          /* Message for non-enrolled users */
           <section className="container mx-auto px-4 py-12">
             <div className="bg-white rounded-xl shadow-lg p-8 text-center">
               <BookOpenIcon className="h-16 w-16 mx-auto text-gray-400 mb-4" />
@@ -694,11 +1243,20 @@ export default function CourseDetails() {
           </section>
         )}
       </main>
+      {showQuiz && <QuizComponent />}
+       {showCertificate && certificateData && (
+      <CertificateViewer 
+        certificate={certificateData}
+        onClose={() => {
+          setShowCertificate(false);
+          setCertificateData(null);
+        }}
+      />
+    )}
     </div>
   );
 }
 
-// Add this component for the check icons
 function CheckIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">

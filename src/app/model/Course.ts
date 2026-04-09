@@ -16,6 +16,12 @@ const CourseSchema = new mongoose.Schema({
   }],
   lessons: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Lesson' }],
   students: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+ quizzes: [{
+  question: { type: String, required: true },
+  options: [{ type: String, required: true }],   // array of answers
+  correctAnswer: { type: Number, required: true } // index of correct option
+}],
+
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

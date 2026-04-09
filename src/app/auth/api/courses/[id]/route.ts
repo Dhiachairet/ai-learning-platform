@@ -14,7 +14,7 @@ export async function GET(
 
     const course = await Course.findById(id)
       .populate('instructor', 'name email')
-      .select('title description category level thumbnail studentsEnrolled instructor materials createdAt updatedAt');
+      .select('title description category level thumbnail studentsEnrolled instructor materials quizzes createdAt updatedAt');
 
     if (!course) {
       return NextResponse.json(
