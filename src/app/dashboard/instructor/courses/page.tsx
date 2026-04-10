@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ChartBarIcon,
@@ -882,7 +882,7 @@ const DeleteModal = ({
   );
 };
 
-export default function InstructorCourses() {
+function InstructorCoursesContent() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userName, setUserName] = useState("Instructor");
   const [isLoading, setIsLoading] = useState(true);
@@ -1768,5 +1768,13 @@ export default function InstructorCourses() {
         }
       `}</style>
     </div>
+  );
+}
+
+export default function InstructorCourses() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="text-lg font-semibold text-gray-900">Loading Instructor Courses...</div></div>}>
+      <InstructorCoursesContent />
+    </Suspense>
   );
 }

@@ -1,10 +1,10 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Bars3Icon, XMarkIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 import { jwtDecode } from 'jwt-decode';
 
-export default function Navbar() {
+function NavbarContent() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<{ name?: string; role?: string } | null>(null);
   const pathname = usePathname();
@@ -157,5 +157,13 @@ export default function Navbar() {
         )}
       </div>
     </nav>
+  );
+}
+
+export default function Navbar() {
+  return (
+    <Suspense fallback={<nav className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100"><div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16"></div></nav>}>
+      <NavbarContent />
+    </Suspense>
   );
 }

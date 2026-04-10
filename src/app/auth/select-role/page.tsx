@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
-export default function SelectRole() {
+function SelectRoleContent() {
   const [role, setRole] = useState<'student' | 'instructor' | ''>('');
   const [educationLevel, setEducationLevel] = useState('');
   const [expertiseArea, setExpertiseArea] = useState<string[]>([]);
@@ -190,5 +190,19 @@ if (response.ok) {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function SelectRole() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="text-lg font-semibold text-gray-900">Loading page...</div>
+        </div>
+      </div>
+    }>
+      <SelectRoleContent />
+    </Suspense>
   );
 }

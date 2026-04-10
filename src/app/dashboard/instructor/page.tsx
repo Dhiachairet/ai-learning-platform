@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ChartBarIcon,
@@ -19,7 +19,7 @@ interface DashboardStats {
   studentSatisfaction: number;
 }
 
-export default function InstructorDashboard() {
+function InstructorDashboardContent() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [userName, setUserName] = useState('');
@@ -418,5 +418,13 @@ export default function InstructorDashboard() {
         </main>
       </div>
     </div>
+  );
+}
+
+export default function InstructorDashboard() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div></div>}>
+      <InstructorDashboardContent />
+    </Suspense>
   );
 }
