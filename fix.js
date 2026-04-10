@@ -1,68 +1,9 @@
-'use client';
+const fs = require('fs');
+const file = 'src/app/auth/select-role/page.tsx';
+let content = fs.readFileSync(file, 'utf8');
+const oldPart = fs.readFileSync('temp.txt', 'utf8');
 
-import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { AcademicCapIcon, BriefcaseIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
-
-function SelectRoleContent() {
-  const [role, setRole] = useState<'student' | 'instructor' | ''>('');
-  const [educationLevel, setEducationLevel] = useState('');
-  const [expertiseArea, setExpertiseArea] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const token = searchParams.get('token');
-
-  useEffect(() => {
-    if (!token) {
-      router.push('/auth/signin');
-    }
-  }, [token, router]);
-
-  const handleRoleSelection = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!role || !token) return;
-
-    setIsLoading(true);
-    try {
-      // ✅ FIX: Use the correct API endpoint
-      const response = await fetch('/auth/api/update-role', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          role,
-          educationLevel: role === 'student' ? educationLevel : undefined,
-          expertiseArea: role === 'instructor' ? expertiseArea : undefined
-        }),
-      });
-
-      const result = await response.json();
-
-    // In your handleRoleSelection function, update the success part:
-if (response.ok) {
-  localStorage.setItem('token', result.token);
-  
-  // ✅ Redirect based on selected role
-  if (role === 'instructor') {
-    router.push('/dashboard/instructor');
-  } else {
-    router.push('/'); // Student goes to homepage
-  }
-}
-    } catch (error) {
-      setMessage('An error occurred. Please try again.');
-      console.error('Role selection error:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (!token) {
+const newReturn = `  if (!token) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
         <div className="text-center bg-white/90 backdrop-blur-sm p-8 rounded-xl shadow-2xl">
@@ -93,34 +34,34 @@ if (response.ok) {
             {/* Student Card */}
             <div
               onClick={() => setRole('student')}
-              className={`relative rounded-2xl border-2 p-6 cursor-pointer flex flex-col items-center text-center transition-all duration-300 transform ${
+              className={\`relative rounded-2xl border-2 p-6 cursor-pointer flex flex-col items-center text-center transition-all duration-300 transform \${
                 role === 'student'
                   ? 'border-indigo-600 bg-indigo-50/70 shadow-lg scale-[1.02] ring-2 ring-indigo-600 ring-offset-2'
                   : 'border-gray-200 bg-white hover:border-indigo-300 hover:shadow-md hover:-translate-y-1'
-              }`}
+              }\`}
             >
               {role === 'student' && <CheckCircleIcon className="absolute top-4 right-4 h-6 w-6 text-indigo-600" />}
-              <div className={`p-4 rounded-full mb-4 ${role === 'student' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-500'}`}>
+              <div className={\`p-4 rounded-full mb-4 \${role === 'student' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-500'}\`}>
                 <AcademicCapIcon className="h-10 w-10" />
               </div>
-              <h3 className={`text-xl font-bold ${role === 'student' ? 'text-indigo-900' : 'text-gray-900'}`}>Student</h3>
+              <h3 className={\`text-xl font-bold \${role === 'student' ? 'text-indigo-900' : 'text-gray-900'}\`}>Student</h3>
               <p className="text-sm text-gray-500 mt-2">I want to learn, enroll in courses, and master new skills.</p>
             </div>
 
             {/* Instructor Card */}
             <div
               onClick={() => setRole('instructor')}
-              className={`relative rounded-2xl border-2 p-6 cursor-pointer flex flex-col items-center text-center transition-all duration-300 transform ${
+              className={\`relative rounded-2xl border-2 p-6 cursor-pointer flex flex-col items-center text-center transition-all duration-300 transform \${
                 role === 'instructor'
                   ? 'border-indigo-600 bg-indigo-50/70 shadow-lg scale-[1.02] ring-2 ring-indigo-600 ring-offset-2'
                   : 'border-gray-200 bg-white hover:border-indigo-300 hover:shadow-md hover:-translate-y-1'
-              }`}
+              }\`}
             >
               {role === 'instructor' && <CheckCircleIcon className="absolute top-4 right-4 h-6 w-6 text-indigo-600" />}
-              <div className={`p-4 rounded-full mb-4 ${role === 'instructor' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-500'}`}>
+              <div className={\`p-4 rounded-full mb-4 \${role === 'instructor' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-500'}\`}>
                 <BriefcaseIcon className="h-10 w-10" />
               </div>
-              <h3 className={`text-xl font-bold ${role === 'instructor' ? 'text-indigo-900' : 'text-gray-900'}`}>Instructor</h3>
+              <h3 className={\`text-xl font-bold \${role === 'instructor' ? 'text-indigo-900' : 'text-gray-900'}\`}>Instructor</h3>
               <p className="text-sm text-gray-500 mt-2">I want to create courses, teach, and share my knowledge.</p>
             </div>
           </div>
@@ -167,9 +108,9 @@ if (response.ok) {
                             setExpertiseArea([...expertiseArea, value]);
                           }
                         }}
-                        className={`flex items-center p-3 rounded-lg border cursor-pointer transition-colors ${
+                        className={\`flex items-center p-3 rounded-lg border cursor-pointer transition-colors \${
                           isChecked ? 'bg-indigo-50 border-indigo-200' : 'hover:bg-gray-50 border-gray-200'
-                        }`}
+                        }\`}
                       >
                         <input
                           type="checkbox"
@@ -188,9 +129,9 @@ if (response.ok) {
           </div>
 
           {message && (
-            <div className={`p-4 rounded-lg text-sm font-medium text-center shadow-sm ${
+            <div className={\`p-4 rounded-lg text-sm font-medium text-center shadow-sm \${
               message.includes('Error') ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-            }`}>
+            }\`}>
               {message}
             </div>
           )}
@@ -208,16 +149,8 @@ if (response.ok) {
   );
 }
 
-export default function SelectRole() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="text-lg font-semibold text-gray-900">Loading page...</div>
-        </div>
-      </div>
-    }>
-      <SelectRoleContent />
-    </Suspense>
-  );
-}
+`;
+
+content = content.replace(oldPart, newReturn);
+fs.writeFileSync(file, content);
+console.log('done!');

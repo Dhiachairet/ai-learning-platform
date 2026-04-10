@@ -15,12 +15,7 @@ const GoogleIcon = () => (
 export default function SignUp() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'student' | 'instructor' | ''>('');
   const [showPassword, setShowPassword] = useState(false);
-  const [educationLevel, setEducationLevel] = useState('');
-  const [learningGoals, setLearningGoals] = useState('');
-  const [expertiseArea, setExpertiseArea] = useState<string[]>([]);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [name, setName] = useState('');
   const [message, setMessage] = useState<string | null>(null);
 
@@ -28,7 +23,7 @@ export default function SignUp() {
  // In your handleSubmit function, update the success part:
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
-  const data = { email, name, password, role, educationLevel, learningGoals, expertiseArea };
+  const data = { email, name, password };
 
   try {
     const response = await fetch('/auth/api/signup', {
@@ -59,16 +54,6 @@ const handleSubmit = async (e: React.FormEvent) => {
     console.error('Signup error:', error);
   }
 };
-
-  // Categories for instructors
-  const handleCategoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { value, checked } = e.target;
-    setExpertiseArea((prev) =>
-      checked ? [...prev, value] : prev.filter((item) => item !== value)
-    );
-  };
-
-  const categories = ['Development', 'Data Science', 'Design', 'Marketing', 'Business'];
 
   // 🔹 Google sign-up logic (same as SignIn)
   const googleAuthUrl =
@@ -158,84 +143,6 @@ const handleSubmit = async (e: React.FormEvent) => {
                 {showPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
               </button>
             </div>
-
-            {/* Role */}
-            <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700">
-                Role
-              </label>
-              <select
-                id="role"
-                value={role}
-                onChange={(e) => setRole(e.target.value as 'student' | 'instructor' | '')}
-                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
-                required
-              >
-                <option value="">Choose...</option>
-                <option value="student">Student</option>
-                <option value="instructor">Instructor</option>
-              </select>
-            </div>
-
-            {/* Student Fields */}
-            {role === 'student' && (
-              <div>
-                <label htmlFor="educationLevel" className="block text-sm font-medium text-gray-700">
-                  Current Education Level
-                </label>
-                <select
-                  id="educationLevel"
-                  value={educationLevel}
-                  onChange={(e) => setEducationLevel(e.target.value)}
-                  className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
-                >
-                  <option value="">Select Level</option>
-                  <option value="high-school">High School</option>
-                  <option value="undergraduate">Undergraduate</option>
-                  <option value="postgraduate">Postgraduate</option>
-                  <option value="self-learner">Self-Learner</option>
-                </select>
-              </div>
-            )}
-
-            {/* Instructor Fields */}
-            {role === 'instructor' && (
-              <div>
-                <label htmlFor="expertiseArea" className="block text-sm font-medium text-gray-700">
-                  Expertise Areas
-                </label>
-                <div className="relative mt-1">
-                  <div
-                    className="border border-gray-300 rounded-md shadow-sm px-4 py-2 bg-white cursor-pointer focus:ring-indigo-500 focus:border-indigo-500"
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  >
-                    <span className="text-gray-900 font-medium">
-                      {expertiseArea.length > 0
-                        ? expertiseArea.map((cat) => cat.replace('-', ' ')).join(', ')
-                        : 'Choose categories'}
-                    </span>
-                  </div>
-                  {isDropdownOpen && (
-                    <div className="absolute z-10 w-full mt-1 border border-gray-300 rounded-md shadow-lg bg-white max-h-40 overflow-auto">
-                      {categories.map((category) => (
-                        <label key={category} className="flex items-center px-4 py-2 hover:bg-gray-100">
-                          <input
-                            type="checkbox"
-                            value={category.toLowerCase().replace(' ', '-')}
-                            checked={expertiseArea.includes(
-                              category.toLowerCase().replace(' ', '-')
-                            )}
-                            onChange={handleCategoryChange}
-                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                          />
-                          <span className="ml-2 text-gray-700">{category}</span>
-                        </label>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
 
             {/* Submit Button */}
             <button
