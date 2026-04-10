@@ -4,6 +4,8 @@ import connectDB from '@/app/lib/db'; // Use default import, not named import
 import User from '@/app/model/User';
 import Course from '@/app/model/Course';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     // Connect to your database

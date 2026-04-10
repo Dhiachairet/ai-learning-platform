@@ -4,6 +4,8 @@ import connectDB from '@/app/lib/db';
 import Course from '@/app/model/Course';
 import User from '@/app/model/User';
 
+export const dynamic = 'force-dynamic';
+
 // GET - Fetch all courses
 export async function GET() {
   try {

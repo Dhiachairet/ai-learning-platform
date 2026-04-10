@@ -35,6 +35,8 @@ const mockStats = {
   admins: 3,
 };
 
+export const dynamic = 'force-dynamic';
+
 // GET - Fetch all users
 export async function GET() {
   try {
