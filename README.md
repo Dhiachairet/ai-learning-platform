@@ -51,7 +51,7 @@ Instructors can upload PDFs, images, and embed YouTube videos. The platform incl
 
 ## Tech Stack
 
-- Next.js 15 (App Router)
+- Next.js 15 
 - Tailwind CSS
 - MongoDB with Mongoose
 - JWT authentication
@@ -62,7 +62,7 @@ Instructors can upload PDFs, images, and embed YouTube videos. The platform incl
 
 ### Requirements
 - Node.js 18 or later
-- MongoDB database (local or Atlas)
+- MongoDB database
 - Gemini API key
 
 ### Installation
