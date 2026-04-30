@@ -102,6 +102,7 @@ const CourseModal = ({
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [quizError, setQuizError] = useState<string | null>(null);
    const [newQuizQuestion, setNewQuizQuestion] = useState<QuizQuestion>({
     question: '',
     options: ['', '', '', ''],
@@ -161,7 +162,6 @@ const handleThumbnailUpload = async (event: React.ChangeEvent<HTMLInputElement>)
   if (!file.type.startsWith('image/')) {
     const errorMsg = `Please select an image file. Selected file type: ${file.type}`;
     setUploadError(errorMsg);
-    alert(errorMsg);
     return;
   }
 
@@ -193,14 +193,12 @@ const handleThumbnailUpload = async (event: React.ChangeEvent<HTMLInputElement>)
     if (materialType === 'pdf' && file.type !== 'application/pdf') {
       const errorMsg = `Please select a PDF file. Selected file type: ${file.type}`;
       setUploadError(errorMsg);
-      alert(errorMsg);
       return;
     }
 
     if (materialType === 'image' && !file.type.startsWith('image/')) {
       const errorMsg = `Please select an image file. Selected file type: ${file.type}`;
       setUploadError(errorMsg);
-      alert(errorMsg);
       return;
     }
 
@@ -706,13 +704,15 @@ const handleThumbnailUpload = async (event: React.ChangeEvent<HTMLInputElement>)
       type="button"
       onClick={() => {
         if (!newQuizQuestion.question.trim()) {
-          alert('Please enter a question');
+          setQuizError('Please enter a question');
           return;
         }
         if (newQuizQuestion.options.some(opt => !opt.trim())) {
-          alert('Please fill all 4 options');
+          setQuizError('Please fill all 4 options');
           return;
         }
+
+        setQuizError(null);
         
         setFormData({
           ...formData,
@@ -731,6 +731,9 @@ const handleThumbnailUpload = async (event: React.ChangeEvent<HTMLInputElement>)
     >
       Add Quiz Question
     </button>
+    {quizError && (
+      <p className="mt-2 text-sm text-red-600">{quizError}</p>
+    )}
   </div>
   
   {/* Quiz Questions List */}
@@ -1651,6 +1654,20 @@ function InstructorCoursesContent() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {currentCourses.map((course) => (
                     <div key={course._id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group">
+                      {course.thumbnail ? (
+                        <div className="relative w-full h-40 bg-gray-100 overflow-hidden">
+                          <img
+                            src={course.thumbnail}
+                            alt={`${course.title} thumbnail`}
+                            className="h-full w-full object-cover"
+                            loading="lazy"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-full h-40 bg-gradient-to-br from-indigo-100 via-blue-100 to-purple-100 flex items-center justify-center">
+                          <BookOpenIcon className="h-10 w-10 text-indigo-400" />
+                        </div>
+                      )}
                       <div className="p-5 flex-grow">
                         <div className="flex justify-between items-start mb-4">
                           <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">

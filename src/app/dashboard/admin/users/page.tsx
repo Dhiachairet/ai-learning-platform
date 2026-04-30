@@ -395,6 +395,9 @@ export default function UserManagement() {
 
   // Filter users based on search and filters
   const filteredUsers = users.filter((user) => {
+    if (user.role === "admin") {
+      return false;
+    }
     const matchesSearch =
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase());

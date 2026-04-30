@@ -1061,6 +1061,20 @@ export default function CourseManagement() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {currentCourses.map((course) => (
                     <div key={course._id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group">
+                      {course.thumbnail ? (
+                        <div className="relative w-full h-40 bg-gray-100 overflow-hidden">
+                          <img
+                            src={course.thumbnail}
+                            alt={`${course.title} thumbnail`}
+                            className="h-full w-full object-cover"
+                            loading="lazy"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-full h-40 bg-gradient-to-br from-indigo-100 via-blue-100 to-purple-100 flex items-center justify-center">
+                          <BookOpenIcon className="h-10 w-10 text-indigo-400" />
+                        </div>
+                      )}
                       <div className="p-5 flex-grow">
                         <div className="flex justify-between items-start mb-4">
                           <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">

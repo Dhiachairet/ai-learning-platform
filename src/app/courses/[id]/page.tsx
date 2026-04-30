@@ -158,6 +158,7 @@ export default function CourseDetails() {
   const [quizAttempts, setQuizAttempts] = useState<QuizAttempt[]>([]);
   const [showCertificate, setShowCertificate] = useState(false);
   const [certificateData, setCertificateData] = useState<any>(null);
+  const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // Calculate derived states
   const quizCompleted = quizAttempts.length > 0;
@@ -168,6 +169,11 @@ export default function CourseDetails() {
                         enrollment.completedMaterials?.length === course.materials.length && 
                         course.materials.length > 0 && 
                         !enrollment.completed;
+
+  const showStatusMessage = (message: string, type: 'success' | 'error') => {
+    setStatusMessage({ message, type });
+    setTimeout(() => setStatusMessage(null), 3000);
+  };
 
   // Get current user from localStorage
   useEffect(() => {
@@ -352,11 +358,11 @@ const fetchCertificate = async () => {
 
       setIsEnrolled(true);
       setEnrollment(data.enrollment);
-      alert('Successfully enrolled in the course!');
+      showStatusMessage('Successfully enrolled in the course!', 'success');
       
     } catch (error) {
       console.error('Enrollment error:', error);
-      alert(error instanceof Error ? error.message : 'Failed to enroll in the course');
+      showStatusMessage(error instanceof Error ? error.message : 'Failed to enroll in the course', 'error');
     } finally {
       setIsEnrolling(false);
     }
@@ -390,7 +396,7 @@ const fetchCertificate = async () => {
       
     } catch (error) {
       console.error('Error marking material as done:', error);
-      alert('Failed to mark material as completed');
+      showStatusMessage('Failed to mark material as completed', 'error');
     } finally {
       setCompletingMaterial(null);
     }
@@ -435,7 +441,7 @@ const fetchCertificate = async () => {
 
   const handleTakeQuiz = () => {
     if (!quizQuestions || quizQuestions.length === 0) {
-      alert('No quiz questions available for this course.');
+      showStatusMessage('No quiz questions available for this course.', 'error');
       return;
     }
     
@@ -631,7 +637,7 @@ const fetchCertificate = async () => {
         }
       } catch (error) {
         console.error('Quiz submission error:', error);
-        alert('Failed to submit quiz. Please try again.');
+        showStatusMessage('Failed to submit quiz. Please try again.', 'error');
       } finally {
         setIsQuizLoading(false);
       }
@@ -736,7 +742,7 @@ const fetchCertificate = async () => {
 
                 {hasPassed && (
                   <button
-                    onClick={() => alert('Certificate will be available soon!')}
+                    onClick={() => showStatusMessage('Certificate will be available soon!', 'success')}
                     className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition font-semibold"
                   >
                     <div className="flex items-center justify-center">
@@ -889,6 +895,20 @@ const fetchCertificate = async () => {
       <Navbar />
 
       <main className="pt-20 lg:pt-24">
+        {statusMessage && (
+          <div className="container mx-auto px-4 pb-2">
+            <div
+              className={`rounded-lg px-4 py-3 text-sm font-medium ${
+                statusMessage.type === 'success'
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                  : 'bg-red-50 text-red-700 border border-red-200'
+              }`}
+              role="status"
+            >
+              {statusMessage.message}
+            </div>
+          </div>
+        )}
         <div className="container mx-auto px-4 py-6">
           <button
             onClick={() => router.push('/courses')}

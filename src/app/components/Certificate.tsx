@@ -41,6 +41,7 @@ interface CertificateProps {
 export default function CertificateViewer({ certificate, onClose }: CertificateProps) {
   const [downloading, setDownloading] = useState(false);
   const [shareText, setShareText] = useState('');
+  const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   useEffect(() => {
     const text = `I'm proud to share that I've completed the "${certificate.courseName}" course! 🎓\n\nCertificate ID: ${certificate.certificateId}\nIssued by LearnAI Hub`;
@@ -53,6 +54,11 @@ export default function CertificateViewer({ certificate, onClose }: CertificateP
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  const showStatusMessage = (message: string, type: 'success' | 'error') => {
+    setStatusMessage({ message, type });
+    setTimeout(() => setStatusMessage(null), 3000);
   };
 
 const downloadPDF = () => {
@@ -109,7 +115,7 @@ const downloadPDF = () => {
     doc.save(`${certificate.certificateId}.pdf`);
   } catch (err) {
     console.error(err);
-    alert('PDF generation failed.');
+    showStatusMessage('PDF generation failed.', 'error');
   }
 };
 
@@ -124,15 +130,16 @@ const downloadPDF = () => {
         });
       } else {
         await navigator.clipboard.writeText(shareText);
-        alert('Certificate details copied to clipboard! You can now share them.');
+        showStatusMessage('Certificate details copied to clipboard! You can now share them.', 'success');
       }
     } catch (error) {
       console.error('Error sharing:', error);
       try {
         await navigator.clipboard.writeText(shareText);
-        alert('Certificate details copied to clipboard!');
+        showStatusMessage('Certificate details copied to clipboard!', 'success');
       } catch (copyError) {
         console.error('Copy failed:', copyError);
+        showStatusMessage('Copy failed. Please try again.', 'error');
       }
     }
   };
@@ -355,6 +362,19 @@ const downloadPDF = () => {
               Share
             </button>
           </div>
+
+          {statusMessage && (
+            <div
+              className={`mt-4 rounded-lg px-4 py-3 text-sm font-medium ${
+                statusMessage.type === 'success'
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                  : 'bg-red-50 text-red-700 border border-red-200'
+              }`}
+              role="status"
+            >
+              {statusMessage.message}
+            </div>
+          )}
 
           {/* Verification Info */}
           <div className="mt-6 p-6 rounded-xl border border-blue-200 bg-blue-50">
